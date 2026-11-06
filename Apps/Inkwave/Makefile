@@ -19,7 +19,7 @@ src = $(addprefix src/,\
 
 CFLAGS = -std=gnu99
 CFLAGS += $(shell $(NWLINK) eadk-cflags-device)
-CFLAGS += -O2 -ffast-math -Wall
+CFLAGS += -O2 -ffast-math -Wall -Wshadow=local
 CFLAGS += -ggdb
 LDFLAGS = $(shell $(NWLINK) eadk-ldflags-device)
 LDFLAGS += --specs=nano.specs
@@ -82,13 +82,13 @@ clean:
 # PC check: plays a whole match with 8 bots, times the frames, saves screenshots to host/out
 .PHONY: host
 host:
-	$(Q) mkdir -p host/out
+	$(if $(wildcard host/out),,$(Q) mkdir -p host/out)
 	$(Q) gcc -O2 -std=gnu99 -Wall -Ihost -o host/inkwave_test host/test.c host/eadk_host.c $(addprefix src/,map.c sim.c bots.c render.c) -lm
 	$(Q) ./host/inkwave_test host/out
 
 # the file Numstore ships (debug info stripped; the same app.bin on the calculator)
 .PHONY: dist
 dist: $(BUILD_DIR)/app.nwa
-	$(Q) mkdir -p dist
+	$(if $(wildcard dist),,$(Q) mkdir dist)
 	$(Q) arm-none-eabi-strip --strip-debug $< -o dist/inkwave.nwa
 	@echo "DIST    dist/inkwave.nwa"

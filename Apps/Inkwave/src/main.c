@@ -1,5 +1,6 @@
 /* Inkwave for NumWorks: menus, input and the frame loop.
- *   Up / Down: walk   Left / Right: turn   4 / 6: step sideways
+ *   , walk forward   sqrt back   i left   x^y right (also pi / x^2 for left / right, as in NumBlocks)
+ *   Arrows: look (turn, look up and down)
  *   OK or EXE: fire (hold)   Shift: squid form (hold)   Alpha: bomb   Back: pause   0: frame counter */
 #include <eadk.h>
 #include <math.h>
@@ -45,14 +46,16 @@ static void how_to_play(void) {
   static const char *const L[] = {
     "Turf War, 4 against 4, 3 minutes. The team that",
     "has inked more of the ground at the end wins.",
-    "Up / Down     walk forward / back",
-    "Left / Right  turn",
-    "4 / 6         step sideways",
+    ",  / sqrt     walk forward / back",
+    "i  / x^y      step left / right (pi, x2 too)",
+    "Arrows        look around",
     "OK or EXE     fire (hold)",
     "Shift         squid form (hold): swim fast and",
     "              refill in your own ink, hidden",
     "Alpha         throw a bomb (70% of your ink)",
     "Back          pause and map    0  frame counter",
+    "Graphics: Auto keeps 30 fps. Full looks best but",
+    " runs at about 25 fps on the calculator.",
     "Enemy ink slows and hurts you. Rest or swim to heal.",
     NULL};
   page("How to play", L);
@@ -116,7 +119,6 @@ static void results(void) {
 /* ------------------------------------------------------------------ match */
 static bool pause_menu(void) {   /* true: quit the match */
   render_map();
-  frame_push();
   wait_release();
   for (;;) {
     eadk_keyboard_state_t k = eadk_keyboard_scan();
@@ -128,7 +130,11 @@ static bool pause_menu(void) {   /* true: quit the match */
 
 static bool show_fps = true;
 
-static void play(int weapon, int difficulty) {
+/* gfx 0 (auto) starts at Balanced (Full measured 40 ms a frame on an N0120, Balanced 28) and steps down to Fast
+ * if the game can't keep 30 fps */
+static void play(int weapon, int difficulty, int gfx) {
+  int q = gfx ? gfx - 1 : Q_BALANCED, slow = 0;
+  render_set_quality(q);
   game_new(weapon, difficulty, false);
   wait_release();
   uint64_t last = eadk_timing_millis(), sec = last;
@@ -153,12 +159,14 @@ static void play(int weapon, int difficulty) {
     zero_was = zero;
     actor_t *me = &G.a[0];
     intent_t *in = &me->in;
-    in->fwd = (float)down(k, eadk_key_up) - (float)down(k, eadk_key_down);
-    in->side = (float)down(k, eadk_key_six) - (float)down(k, eadk_key_four);
+    in->fwd = (float)down(k, eadk_key_comma) - (float)down(k, eadk_key_sqrt);
+    in->side = (float)(down(k, eadk_key_power) || down(k, eadk_key_square)) -
+               (float)(down(k, eadk_key_imaginary) || down(k, eadk_key_pi));
     int td = (int)down(k, eadk_key_right) - (int)down(k, eadk_key_left);
     turn_t = td ? turn_t + dt : 0;
     float rate = 1.6f + 1.8f * clampf(turn_t / 0.4f, 0, 1);   /* fine at first, faster when held */
     in->turn = td * rate * dt;
+    in->look = ((int)down(k, eadk_key_up) - (int)down(k, eadk_key_down)) * 1.2f * dt;
     in->fire = down(k, eadk_key_ok) || down(k, eadk_key_exe);
     in->squid = down(k, eadk_key_shift);
     in->bomb = down(k, eadk_key_alpha);
@@ -166,7 +174,6 @@ static void play(int weapon, int difficulty) {
     game_step(dt);
     if (G.phase == PH_DONE) { results(); return; }
     render_frame(fps, work_ms, show_fps);
-    frame_push();
 
     frames++;
     uint64_t t1 = eadk_timing_millis();
@@ -177,57 +184,137 @@ static void play(int weapon, int difficulty) {
       frames = 0;
       work_sum = 0;
       sec = t1;
+      if (!gfx && q > Q_FAST && G.phase != PH_INTRO) {
+        slow = fps < 29 ? slow + 1 : 0;
+        if (slow >= 2) { render_set_quality(--q); slow = 0; }
+      }
     }
     int spent = (int)(t1 - t0);
     eadk_timing_msleep(spent < FRAME_MS - 1 ? FRAME_MS - spent : 1);   /* always yield a little */
   }
 }
 
+/* ------------------------------------------------------------------ benchmark (0 on the title screen) */
+/* Times the parts of a frame on the calculator: a demo match is played for 30 s without drawing, then the same
+ * frame is drawn 20 times per line with parts left out. The ms are per frame. */
+static int bench_ms(int q, int flags) {
+  render_set_quality(q);
+  render_debug = flags;
+  int sum = 0;
+  for (int i = 0; i < 20; i++) {
+    uint64_t a = eadk_timing_millis();
+    render_frame(30, 0, true);
+    sum += (int)(eadk_timing_millis() - a);
+    eadk_timing_msleep(2);
+  }
+  render_debug = 0;
+  return sum * 10 / 20;   /* tenths of a ms */
+}
+static void benchmark(void) {
+  eadk_display_push_rect_uniform(eadk_screen_rect, C_BG);
+  say_at(8, 8, "Benchmark: playing 30 s of a demo match...", C_TXT, false);
+  rnd_seed(7);
+  game_new(W_SHOOTER, D_FRESH, true);
+  int sim = 0;
+  for (int i = 0; i < 900; i++) {
+    uint64_t a = eadk_timing_millis();
+    game_step(1.0f / 30);
+    if (i >= 600) sim += (int)(eadk_timing_millis() - a);
+    eadk_timing_msleep(1);
+  }
+  static const struct { const char *name; int q, flags; } R[] = {
+    {"Full", Q_FULL, 0},
+    {"Full, no push", Q_FULL, RD_NOPUSH},
+    {"  and no sky", Q_FULL, RD_NOPUSH | RD_NOSKY},
+    {"  and no ground texture", Q_FULL, RD_NOPUSH | RD_NOTEX},
+    {"Raw pixel writes (Full)", -1, 0},
+    {"  and no kids/shots", Q_FULL, RD_NOPUSH | RD_NOSPRITES},
+    {"  and no HUD", Q_FULL, RD_NOPUSH | RD_NOHUD},
+    {"  and none of these", Q_FULL, RD_NOPUSH | RD_NOSKY | RD_NOTEX | RD_NOWATER | RD_NOSPRITES | RD_NOHUD},
+    {"Balanced", Q_BALANCED, 0},
+    {"Balanced, no push", Q_BALANCED, RD_NOPUSH},
+    {"Fast", Q_FAST, 0},
+    {"Fast, no push", Q_FAST, RD_NOPUSH},
+  };
+  int ms[12];
+  for (int i = 0; i < 12; i++) ms[i] = R[i].q < 0 ? render_bench_raw() : bench_ms(R[i].q, R[i].flags);
+  eadk_display_push_rect_uniform(eadk_screen_rect, C_BG);
+  eadk_display_push_rect_uniform((eadk_rect_t){0, 0, 320, 30}, RGB(255, 138, 20));
+  eadk_display_draw_string("Benchmark (ms per frame)", (eadk_point_t){10, 6}, true, 0xFFFF, RGB(255, 138, 20));
+  char b[48];
+  for (int i = 0; i < 12; i++) {
+    snprintf(b, sizeof b, "%-26s %3d.%d", R[i].name, ms[i] / 10, ms[i] % 10);
+    say_at(8, 36 + i * 14, b, C_TXT, false);
+  }
+  snprintf(b, sizeof b, "%-26s %3d.%d", "Game logic (8 bots)", sim / 300, sim * 10 / 300 % 10);
+  say_at(8, 36 + 12 * 14, b, C_HI, false);
+  say_at(8, 222, "Back: return", C_DIM, false);
+  wait_release();
+  for (;;) {
+    eadk_keyboard_state_t k = eadk_keyboard_scan();
+    if (down(k, eadk_key_back) || down(k, eadk_key_ok) || down(k, eadk_key_exe)) break;
+    eadk_timing_msleep(20);
+  }
+  wait_release();
+  paint_clear();
+  render_set_quality(Q_BALANCED);
+}
+
 /* ------------------------------------------------------------------ title */
+static int sel = 0, weapon = W_SHOOTER, diff = D_FRESH, gfx = 0;   /* gfx: 0 auto, else Q_* + 1 */
+static const char *const GFX_NAME[4] = {"Auto", "Fast", "Balanced", "Full"};
+static const char *const ITEMS[7] = {"PLAY", "WEAPON", "BOTS", "GRAPHICS", "HOW TO PLAY", "ABOUT", "QUIT"};
+
+static void title_overlay(void) {
+  text(VW / 2 - text_w("INKWAVE", 3) / 2 + 1, 9, "INKWAVE", RGB(30, 20, 40), 3);
+  text(VW / 2 - text_w("INKWAVE", 3) / 2, 8, "INKWAVE", RGB(255, 138, 20), 3);
+  text_o(VW / 2 - text_w("TURF WAR", 1) / 2, 32, "TURF WAR", 0xFFFF, 1);
+  for (int i = 0; i < 7; i++) {
+    char b[40];
+    if (i == 1) snprintf(b, sizeof b, "< %s >", WEAPON_NAME[weapon]);
+    else if (i == 2) snprintf(b, sizeof b, "< BOTS: %s >", DIFF_NAME[diff]);
+    else if (i == 3) snprintf(b, sizeof b, "< GRAPHICS: %s >", GFX_NAME[gfx]);
+    else snprintf(b, sizeof b, "%s", ITEMS[i]);
+    int y = 44 + i * 10, w = text_w(b, 1), x = VW / 2 - w / 2;
+    frame_fill(x - 4, y - 2, w + 8, 10, i == sel ? RGB(255, 138, 20) : RGB(24, 28, 44));
+    text(x, y, b, 0xFFFF, 1);
+  }
+  text_o(2, VH - 9, "BASED ON INKWAVE (MIT)", RGB(230, 230, 240), 1);
+}
+
 int main(void) {
   rnd_seed(eadk_random());
   nav_init();
+  render_init();
+  render_set_quality(Q_BALANCED);
   paint_clear();
-  int sel = 0, weapon = W_SHOOTER, diff = D_FRESH;
   float orbit = 0;
   eadk_keyboard_state_t prev = 0;
-  static const char *const ITEMS[6] = {"PLAY", "WEAPON", "BOTS", "HOW TO PLAY", "ABOUT", "QUIT"};
   G.col[0] = RGB(255, 138, 20);
+  G.col[1] = RGB(47, 91, 255);
   wait_release();
   for (;;) {
     eadk_keyboard_state_t k = eadk_keyboard_scan(), hit = k & ~prev;
     prev = k;
-    if (down(hit, eadk_key_up)) sel = (sel + 5) % 6;
-    if (down(hit, eadk_key_down)) sel = (sel + 1) % 6;
+    if (down(hit, eadk_key_up)) sel = (sel + 6) % 7;
+    if (down(hit, eadk_key_down)) sel = (sel + 1) % 7;
     int lr = (int)down(hit, eadk_key_right) - (int)down(hit, eadk_key_left);
     if (sel == 1 && lr) weapon = (weapon + W_COUNT + lr) % W_COUNT;
     if (sel == 2 && lr) diff = (diff + 3 + lr) % 3;
+    if (sel == 3 && lr) gfx = (gfx + 4 + lr) % 4;
     if (down(hit, eadk_key_back)) return 0;
+    if (down(hit, eadk_key_zero)) { benchmark(); prev = eadk_keyboard_scan(); continue; }
     if (down(hit, eadk_key_ok) || down(hit, eadk_key_exe)) {
-      if (sel == 0) { play(weapon, diff); paint_clear(); }
-      else if (sel == 3) how_to_play();
-      else if (sel == 4) about();
-      else if (sel == 5) return 0;
+      if (sel == 0) { play(weapon, diff, gfx); paint_clear(); render_set_quality(Q_BALANCED); }
+      else if (sel == 4) how_to_play();
+      else if (sel == 5) about();
+      else if (sel == 6) return 0;
       prev = eadk_keyboard_scan();
       continue;
     }
     orbit += 0.004f;
-    render_orbit(orbit);
-    text(RW / 2 - text_w("INKWAVE", 3) / 2 + 1, 9, "INKWAVE", RGB(30, 20, 40), 3);
-    text(RW / 2 - text_w("INKWAVE", 3) / 2, 8, "INKWAVE", RGB(255, 138, 20), 3);
-    text(RW / 2 - text_w("TURF WAR", 1) / 2, 32, "TURF WAR", 0xFFFF, 1);
-    for (int i = 0; i < 6; i++) {
-      char b[40];
-      if (i == 1) snprintf(b, sizeof b, "< %s >", WEAPON_NAME[weapon]);
-      else if (i == 2) snprintf(b, sizeof b, "< BOTS: %s >", DIFF_NAME[diff]);
-      else snprintf(b, sizeof b, "%s", ITEMS[i]);
-      int y = 48 + i * 11, w = text_w(b, 1), x = RW / 2 - w / 2;
-      if (i == sel) frame_fill(x - 4, y - 2, w + 8, 11, RGB(255, 138, 20));
-      else frame_fill(x - 4, y - 2, w + 8, 11, RGB(24, 28, 44));
-      text(x, y, b, 0xFFFF, 1);
-    }
-    text(2, RH - 8, "BASED ON INKWAVE (MIT)", RGB(230, 230, 240), 1);
-    frame_push();
-    eadk_timing_msleep(20);
+    G.clock += 0.03f;
+    render_title(orbit, title_overlay);
+    eadk_timing_msleep(10);
   }
 }

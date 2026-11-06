@@ -83,6 +83,7 @@ static void place(actor_t *a) {
   a->z = ground_at(a->x, a->y);
   a->vx = a->vy = a->vz = 0;
   a->yaw = a->team ? PI_F : 0;
+  a->pitch = 0;
   a->hp = HP;
   a->ink = INK_MAX;
   a->alive = true;
@@ -136,6 +137,16 @@ void game_new(int weapon, int difficulty, bool demo) {
 static void splat_fx(float x, float y, float z, float r, int team, actor_t *by) {
   float m2 = paint_disc(x, y, z, r, team);
   if (by) by->turf += m2;
+}
+
+static void drops(float x, float y, float z, int team, int n) {   /* splash droplets, for the eye only */
+  for (int i = 0; i < MAX_PART && n > 0; i++) {
+    part_t *q = &G.part[i];
+    if (q->t > 0) continue;
+    float an = frnd() * 2 * PI_F, sp = 1 + 2 * frnd();
+    *q = (part_t){x, y, z + 0.05f, cosf(an) * sp, sinf(an) * sp, 2.5f + 2.5f * frnd(), 0.35f + 0.2f * frnd(), team};
+    n--;
+  }
 }
 
 static void hurt(actor_t *v, float dmg, actor_t *by) {
@@ -239,6 +250,7 @@ static void shoot(actor_t *a, int kind, float yaw, float speed, float range, flo
   p->z = a->z + 1.0f;
   p->vx = fx * speed;
   p->vy = fy * speed;
+  p->vz = speed * tanf(a->pitch);   /* aimed up or down */
   p->straight = range * 0.6f;
   float tdrop = range * 0.4f / speed;
   p->g = 2.0f / (tdrop * tdrop);   /* drops 1 m over the rest of its range: lands about `range` out */
@@ -252,10 +264,11 @@ static void fire_charger(actor_t *a) {
   float c = a->charge;
   float range = 11 + 16 * c, dmg = 40 + 120 * c;
   float yaw = assist(a, a->yaw, range);
-  float fx = cosf(yaw), fy = sinf(yaw), z = a->z + 1.0f, d;
+  float fx = cosf(yaw), fy = sinf(yaw), z0 = a->z + 1.0f, sl = tanf(a->pitch), z = z0, d;
   actor_t *hit = 0;
   for (d = 0.5f; d < range; d += 0.25f) {
     float x = a->x + fx * d, y = a->y + fy * d;
+    z = z0 + sl * d;
     int tx = (int)floorf(x * 2), ty = (int)floorf(y * 2);
     if (col_kind(tx, ty) == K_WALL || col_top(tx, ty) > z) break;
     for (int i = 0; i < N_ACTORS && !hit; i++) {
@@ -272,7 +285,7 @@ static void fire_charger(actor_t *a) {
   if (hit) hurt(hit, dmg, a);
   else { float g = ground_at(ex, ey); if (z - g < 2.6f) splat_fx(ex, ey, g, 1.2f, a->team, a); }
   for (int i = 0; i < MAX_BEAM; i++)
-    if (G.beam[i].t <= 0) { G.beam[i] = (beam_t){a->x + fx * 0.4f, a->y + fy * 0.4f, z, ex, ey, z, 0.12f, a->team}; break; }
+    if (G.beam[i].t <= 0) { G.beam[i] = (beam_t){a->x + fx * 0.4f, a->y + fy * 0.4f, z0 + sl * 0.4f, ex, ey, z, 0.12f, a->team}; break; }
   a->ink -= 18 * (c > 0.15f ? c : 0.15f);
   a->ink_idle = 0;
   a->charge = 0;
@@ -348,7 +361,7 @@ static void weapons(actor_t *a, float dt) {
       p->team = (int8_t)a->team;
       p->owner = (int8_t)a->idx;
       p->x = a->x + fx * 0.4f; p->y = a->y + fy * 0.4f; p->z = a->z + 1.2f;
-      p->vx = fx * 10.5f; p->vy = fy * 10.5f; p->vz = 5.5f;
+      p->vx = fx * 10.5f; p->vy = fy * 10.5f; p->vz = 5.5f + 10.5f * tanf(a->pitch);
       p->g = 24;
       a->ink -= BOMB_INK;
       a->ink_idle = 0;
@@ -368,6 +381,7 @@ static void explode(proj_t *p) {
       hurt(e, BOMB_DMG_MAX - (BOMB_DMG_MAX - BOMB_DMG_MIN) * d / BOMB_RADIUS, by);
   }
   splat_fx(p->x, p->y, p->z, BOMB_PAINT, p->team, by);
+  drops(p->x, p->y, p->z, p->team, 10);
   for (int i = 0; i < MAX_BLAST; i++)
     if (G.blast[i].t <= 0) { G.blast[i] = (blast_t){p->x, p->y, p->z, BOMB_RADIUS, 0.3f, p->team}; break; }
   p->used = false;
@@ -389,7 +403,7 @@ static void step_proj(proj_t *p, float dt) {
     p->y += p->vy * h;
     p->travelled += step;
     if (p->kind == P_BOMB) { p->vz -= p->g * h; p->z += p->vz * h; }
-    else if (p->straight > 0) p->straight -= step;
+    else if (p->straight > 0) { p->straight -= step; p->z += p->vz * h; }
     else { p->vz -= p->g * h; p->z += p->vz * h; }
     if (p->x < -2 || p->y < -2 || p->x > MAP_WM + 2 || p->y > MAP_HM + 2 || p->z < -3) { p->used = false; return; }
     /* hits a kid */
@@ -402,6 +416,7 @@ static void step_proj(proj_t *p, float dt) {
           float k = clampf((p->travelled - 1.5f) / 4.5f, 0, 1);
           hurt(e, p->dmg + (p->dmg_far - p->dmg) * k, by);
           splat_fx(p->x, p->y, e->z, 0.5f, p->team, by);
+          drops(p->x, p->y, p->z, p->team, 3);
           p->used = false;
           return;
         }
@@ -434,6 +449,7 @@ static void step_proj(proj_t *p, float dt) {
       if (kind == K_WATER) { p->used = false; return; }
       if (p->kind == P_BOMB) { p->landed = true; p->fuse = BOMB_FUSE; p->vx = p->vy = p->vz = 0; return; }
       splat_fx(p->x, p->y, top, p->radius, p->team, by);
+      drops(p->x, p->y, top, p->team, p->kind == P_DROP ? 2 : 1);
       p->used = false;
       return;
     }
@@ -461,6 +477,7 @@ static void step_actor(actor_t *a, float dt) {
   for (int i = 0; i < N_ACTORS; i++) if (a->hit_cd[i] > 0) a->hit_cd[i] -= dt;
   if (G.phase != PH_PLAY) { memset(&a->in, 0, sizeof a->in); }
   a->yaw = wrap_angle(a->yaw + a->in.turn);
+  a->pitch = clampf(a->pitch + a->in.look, -0.5f, 0.45f);
   a->squid = a->in.squid && a->windup <= 0;
   if (a->squid) a->charge = 0;
   int under = paint_at(a->x, a->y);
@@ -505,4 +522,11 @@ void game_step(float dt) {
   for (int i = 0; i < MAX_PROJ; i++) if (G.p[i].used) step_proj(&G.p[i], dt);
   for (int i = 0; i < MAX_BEAM; i++) if (G.beam[i].t > 0) G.beam[i].t -= dt;
   for (int i = 0; i < MAX_BLAST; i++) if (G.blast[i].t > 0) G.blast[i].t -= dt;
+  for (int i = 0; i < MAX_PART; i++) {
+    part_t *q = &G.part[i];
+    if (q->t <= 0) continue;
+    q->t -= dt;
+    q->vz -= 14 * dt;
+    q->x += q->vx * dt; q->y += q->vy * dt; q->z += q->vz * dt;
+  }
 }

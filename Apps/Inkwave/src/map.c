@@ -10,22 +10,28 @@
 uint8_t scratch[SCRATCH_BYTES] __attribute__((aligned(4)));
 static uint8_t paint[PAINT_H][PAINT_W / 4];   /* 2 bits per cell: 0 none, 1 Alpha, 2 Bravo */
 
+/* The stage's columns copied to RAM, packed: height | look << 8 (the arrays in map_data.h stay in the
+ * calculator's external flash, which is slow to read at random; the renderer reads a column per ray step). */
+static uint16_t colw[TH * TW];
+static void cols_init(void) {
+  for (int i = 0; i < TW * TH; i++) colw[i] = (uint16_t)(map_h[i] | map_look[i] << 8);
+}
 int col_kind(int tx, int ty) {
   if ((unsigned)tx >= TW || (unsigned)ty >= TH) return K_WATER;
-  return map_look[ty * TW + tx] >> 6;
+  return colw[ty * TW + tx] >> 14;
 }
 float col_top(int tx, int ty) {
   if ((unsigned)tx >= TW || (unsigned)ty >= TH) return -1.6f;
-  return map_h[ty * TW + tx] * 0.1f - 2.0f;
+  return (colw[ty * TW + tx] & 255) * 0.1f - 2.0f;
 }
 int col_colour(int tx, int ty) {
   if ((unsigned)tx >= TW || (unsigned)ty >= TH) return 0;
-  return map_look[ty * TW + tx] & 15;
+  return (colw[ty * TW + tx] >> 8) & 15;
 }
 uint16_t map_colour(int i) { return map_pal[i & 15]; }
 int col_surface(int tx, int ty) {
   if ((unsigned)tx >= TW || (unsigned)ty >= TH) return 0;
-  return (map_look[ty * TW + tx] >> 4) & 3;
+  return (colw[ty * TW + tx] >> 12) & 3;
 }
 int col_light(int tx, int ty) {
   if ((unsigned)tx >= TW || (unsigned)ty >= TH) return 0;
@@ -139,6 +145,7 @@ static uint8_t nav_from[NAV_H][NAV_W];   /* path search: the step that reached t
 static const int8_t DX8[8] = {1, -1, 0, 0, 1, 1, -1, -1}, DY8[8] = {0, 0, 1, -1, 1, -1, 1, -1};
 
 void nav_init(void) {
+  cols_init();
   for (int ny = 0; ny < NAV_H; ny++)
     for (int nx = 0; nx < NAV_W; nx++) {
       int lo = 255, hi = 0, ok = 1;

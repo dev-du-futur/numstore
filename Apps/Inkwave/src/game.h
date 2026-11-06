@@ -137,6 +137,10 @@ extern const char *const QUALITY_NAME[3];
 void render_init(void);
 void render_set_quality(int q);
 void render_frame(int fps, int frame_ms, bool show_fps);
+/* benchmark switches: leave parts of the frame out, to time them on the calculator */
+enum { RD_NOPUSH = 1, RD_NOSKY = 2, RD_NOTEX = 4, RD_NOWATER = 8, RD_NOSPRITES = 16, RD_NOHUD = 32 };
+extern int render_debug;
+int render_bench_raw(void);   /* ms for one frame's worth of pixel and depth writes, no drawing */
 void render_map(void);                          /* pause screen: the whole stage from above */
 void render_title(float angle, void (*overlay)(void));   /* the camera circles the plaza */
 /* HUD drawing for overlays, in a virtual 160 x 120 space whatever the resolution */

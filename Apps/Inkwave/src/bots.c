@@ -245,6 +245,11 @@ void bot_think(actor_t *a, float dt) {
     if (b->chargeto == 0) b->chargeto = 0.7f;
   }
 
+  /* look up or down at the target (level otherwise) */
+  float want_pitch = 0;
+  if (b->mode == M_FIGHT && tg && d_t > 0.5f) want_pitch = atanf((tg->z + 0.8f - a->z - 1.0f) / d_t);
+  in->look = clampf((want_pitch - a->pitch) * 0.5f, -2 * dt, 2 * dt);
+
   /* turn (rate-capped), then move in that frame */
   float turn = wrap_angle(want_yaw - a->yaw), cap = DIFF_TURN[G.difficulty] * dt;
   in->turn = clampf(turn * 0.5f, -cap, cap);

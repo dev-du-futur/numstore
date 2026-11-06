@@ -14,9 +14,10 @@ copied in `LICENSE-inkwave.txt`. The game credits it on its title and About scre
 
 | Key | Action |
 |---|---|
-| Up / Down | walk forward / back |
+| `,` / √ | walk forward / back (the NumBlocks layout) |
+| i / x^y | step left / right (π and x² work too) |
 | Left / Right | turn (slow at first, faster when held) |
-| 4 / 6 | step sideways |
+| Up / Down | look up / down (aims shots, bombs and the charger) |
 | OK or EXE | fire (hold) |
 | Shift | squid form (hold): swim fast in your own ink, hidden, and refill |
 | Alpha | throw a bomb (70 % of your ink) |
@@ -41,10 +42,20 @@ copied in `LICENSE-inkwave.txt`. The game credits it on its title and About scre
 
 ## Rendering
 
-The renderer is software-only. It casts one ray per column of a 160 x 120 frame through the heightfield, front to
-back. Each 0.5 m column draws its front face and its top, and the tops are inked per pixel. Kids, shots and
-bombs are billboards tested against a depth buffer. The frame is doubled to 320 x 240 and pushed in strips
-of 16 rows. The frame, depth buffer and ink take about 114 KB of static RAM; nothing is allocated.
+The renderer is software-only. It casts one ray per screen column through the heightfield, front to back,
+over the right shoulder of your kid. Each 0.5 m column draws its front face and its top, and the tops are
+inked per pixel. The screen is drawn and pushed in 10 strips of 32 columns, each with its own depth buffer, so
+nothing is allocated (about 112 KB of static RAM in all, the ink grid included).
+
+What it draws: a sky with clouds, sun and distant hills; the sea with waves, glints and foam on the shore;
+brick (herringbone), terrazzo and stone-step floors; stone walls with windows; sun shadows and contact shadows
+baked from the stage; kids as billboards seen from the front, side or back, with ink tanks, weapons, squid form
+and swim ripples; shots, ink droplets, bomb blasts and charger sights.
+
+**Graphics** (title menu): Fast (160 x 120), Balanced (160 x 240) or Full (320 x 240). On an N0120 the benchmark
+(0 on the title screen) measured about 21, 28 and 46 ms a frame, so Full runs at about 22-25 fps. Auto, the default,
+starts at Balanced and drops to Fast after 2 seconds under 29 fps. This takes the place of a small and a full build:
+the whole app is about 120 KB, so one build with a setting is simpler than two downloads.
 
 The frame counter (top right, on by default; key 0) shows frames per second and the milliseconds each frame
 takes to simulate, render and push. The game sleeps the rest of a 33 ms frame, so the counter stays at 30 when
@@ -53,7 +64,7 @@ there is headroom. The ms figure shows how much headroom is left.
 ## Building
 
 ```
-make build check     # output/app.nwa, output/app.bin (about 86 KB on the calculator)
+make build check     # output/app.nwa, output/app.bin (about 120 KB on the calculator)
 make dist            # dist/inkwave.nwa, the file Numstore ships (debug info stripped)
 make host            # PC check: a whole match with 8 bots, frame times, screenshots in host/out
 ```
