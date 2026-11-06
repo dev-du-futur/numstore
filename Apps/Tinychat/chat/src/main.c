@@ -29,7 +29,7 @@ const uint32_t eadk_api_level __attribute__((section(".rodata.eadk_api_level")))
 #define USER_MAXW (W - 60)
 #define MAXIN 120
 #define REPLY_MAX 80                   /* tokens per reply */
-#define CTX 256
+#define CTX 128                        /* tokens of memory: 256 needs about 440 KB of RAM, too much */
 
 #define RGB(r, g, b) ((eadk_color_t)((((r) & 0xF8) << 8) | (((g) & 0xFC) << 3) | ((b) >> 3)))
 static const eadk_color_t
@@ -503,6 +503,44 @@ static void make_room(int need) {
   feed(tmp, n);
 }
 
+/* Keep only the last exchange when two or more are in memory. */
+static void forget_old(void) {
+  int turns = 0, last = -1;
+  for (int i = 0; i < nhist; i++)
+    if (hist[i] == M.tok_u) turns++, last = i;
+  if (turns < 2) return;
+  int n = nhist - last;
+  int tmp[CTX];
+  memcpy(tmp, hist + last, n * sizeof(int));
+  nhist = 0;
+  nwai_reset(&M);
+  feed(tmp, n);
+}
+
+/* "what did I say?": quoted exactly by the app, since a model this small can't copy text reliably */
+static char prev_q[MAXIN + 1];
+
+static int what_said(const char *q, char *ans, int size) {
+  char t[MAXIN + 1];
+  int n = 0;
+  for (const char *p = q; *p && n < MAXIN; p++) { /* lowercase letters and single spaces only */
+    char c = *p >= 'A' && *p <= 'Z' ? *p + 32 : *p;
+    if ((c >= 'a' && c <= 'z') || (c == ' ' && n && t[n - 1] != ' ')) t[n++] = c;
+  }
+  while (n && t[n - 1] == ' ') n--;
+  t[n] = 0;
+  static const char *const asks[] = {"what did i say", "what did i just say", "what was my question",
+                                     "what did i ask", "what did i just ask", "repeat what i said",
+                                     "what was my last message", "what did i write"};
+  for (unsigned i = 0; i < sizeof asks / sizeof *asks; i++)
+    if (strcmp(t, asks[i]) == 0) {
+      if (prev_q[0]) snprintf(ans, size, "You said: \"%s\"", prev_q);
+      else snprintf(ans, size, "Nothing yet, this is your first message!");
+      return 1;
+    }
+  return 0;
+}
+
 static void reply(void) {
   int toks[MAXIN + 2], n = 0;
   toks[n++] = M.tok_u;
@@ -524,7 +562,9 @@ static void reply(void) {
   /* Built-in helpers first: maths, units, primes and known facts are answered exactly.
    * The model doesn't see these turns; it only handles what the helpers don't know. */
   char ans[256];
-  if (helper_reply(question, ans, sizeof ans, eadk_random())) {
+  int said = what_said(question, ans, sizeof ans);
+  if (!said) memcpy(prev_q, question, sizeof prev_q);
+  if (said || helper_reply(question, ans, sizeof ans, eadk_random())) {
     set_status("answer", C_GREEN);
     int len = strlen(ans);
     for (int i = 0; i < len;) { /* word by word, quick, so it reads like the AI writing */
@@ -538,6 +578,8 @@ static void reply(void) {
       i = j;
     }
     set_status("calculated", C_GREEN);
+    nhist = 0; /* the model didn't see this exchange: don't let it answer follow-ups to older ones */
+    nwai_reset(&M);
     draw_face(FACE_REST);
     draw_chat();
     return;
@@ -546,11 +588,16 @@ static void reply(void) {
 
   uint64_t t0 = eadk_timing_millis();
   show_dots = 1;
-  /* Every message starts from a clean memory: this small model can't use earlier turns, it
-   * just copies their pattern ("tell a joke" after a capital -> "Paris is the capital of..."). */
-  nhist = 0;
-  nwai_reset(&M);
+  /* Memory: the model sees at most the last two exchanges, which is what it was trained on
+   * ("another" after a joke, "how do you know?" after a fact). With two already in memory it
+   * keeps only the last one, so the earlier ones are re-read about every other message. */
+  forget_old();
   make_room(n + REPLY_MAX);
+  /* the previous reply, hist[prev_a..prev_b): the first words of this one shy away from it,
+   * so "another" after a joke gets a different joke */
+  int prev_a = nhist, prev_b = nhist;
+  for (int i = nhist - 1; i >= 0; i--)
+    if (hist[i] == M.tok_b) { prev_a = i + 1; break; }
   float *lg = feed(toks, n);
   int reply_start = nhist;
   show_dots = 0;
@@ -561,6 +608,7 @@ static void reply(void) {
     /* low temperature + min-p: no invented words; a very light penalty on what this reply already
      * said (stronger ones broke long learnt answers, which reuse "the" and ",") */
     nwai_penalize(lg, hist + reply_start, nhist - reply_start, 1.05f);
+    if (count < 3) nwai_penalize(lg, hist + prev_a, prev_b - prev_a, 1.3f);
     int t = nwai_sample(&M, lg, 0.4f, 40, 0.2f, eadk_random());
     if (t == M.tok_eos || t == M.tok_u || t == M.tok_b) break;
     msg_append((const char *)M.piece[t], M.piece_len[t]);
@@ -589,7 +637,10 @@ static void info(const char *s) {
 
 static void welcome(void) {
   nmsg = 0; arena_used = 0; scroll_px = 0;
-  info("TinyChat runs fully on this calculator.");
+  /* which size is installed: Full is 256 wide (3.7M parameters), Small 192 (2.1M) */
+  char b[64];
+  snprintf(b, sizeof b, "%s model - runs fully on this calculator.", M.dim >= 256 ? "Full" : "Small");
+  info(b);
   msg_new(WHO_BOT);
   const char *hi = "Hi! I'm TinyChat, a tiny AI living in your calculator. Ask me anything!";
   msg_append(hi, strlen(hi));
@@ -650,6 +701,7 @@ int main(void) {
     }
     if (e == eadk_event_clear) {
       nhist = 0;
+      prev_q[0] = 0;
       nwai_reset(&M);
       welcome();
       set_status("ready", C_GREEN);

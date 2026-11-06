@@ -125,6 +125,7 @@ main { flex: 1; overflow: auto; padding: 16px 24px 24px; }
 .actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; }
 .progress { height: 8px; background: #e4e5e8; border-radius: 2px; overflow: hidden; margin: 14px 0 10px; }
 .progress div { height: 100%; width: 30%; background: var(--orange); animation: slide 1.4s ease-in-out infinite; }
+.progress.known div { animation: none; transform: none; transition: width 0.4s; }
 @keyframes slide { 0% { transform: translateX(-100%); } 100% { transform: translateX(340%); } }
 
 .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: var(--dark); color: var(--white);

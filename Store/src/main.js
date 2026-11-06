@@ -59,16 +59,24 @@ function state() {
 
 function push() { send("state", state()); }
 
-async function rescan() {
-  if (busy) return;
-  try {
-    const r = await device.scan();
-    calc = r.connected ? r : { connected: false };
-  } catch (e) {
-    calc = { connected: !!device.findDevice(), apps: [], error: friendly(e) };
-    if (calc.connected) calc = { ...calc, model: "?", used: 0, total: 0 };
-  }
-  push();
+// The scan in progress, if any: an install waits for it, so that Numstore and nwlink
+// never talk to the calculator at the same time (an install hung like that on 2026-11-06).
+let scanning = null;
+
+function rescan() {
+  if (busy) return Promise.resolve();
+  if (scanning) return scanning;
+  scanning = (async () => {
+    try {
+      const r = await device.scan();
+      calc = r.connected ? r : { connected: false };
+    } catch (e) {
+      calc = { connected: !!device.findDevice(), apps: [], error: friendly(e) };
+      if (calc.connected) calc = { ...calc, model: "?", used: 0, total: 0 };
+    }
+    push();
+  })().finally(() => { scanning = null; });
+  return scanning;
 }
 
 function scheduleScan(ms = 800) {
@@ -92,7 +100,9 @@ function friendly(e) {
 async function apply(target, label) {
   if (busy) return;
   busy = true;
+  clearTimeout(scanTimer);
   push();
+  if (scanning) await scanning.catch(() => {});
   const step = (text, detail) => send("progress", { label, text, detail });
   try {
     const apps = catalog.all();

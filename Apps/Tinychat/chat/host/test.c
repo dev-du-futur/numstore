@@ -21,7 +21,7 @@ int main(int argc, char **argv) {
   if (err) { fprintf(stderr, "init error %d\n", err); return 1; }
   printf("dim %d hidden %d layers %d vocab %d ctx %d, RAM %u bytes\n", m.dim, m.hidden, m.layers,
          m.vocab, m.ctx, (unsigned)nwai_ram_needed(blob, 0));
-  int ids[512], n = 0;
+  int ids[512], n = 0, prev_a = 0, prev_b = 0; /* the last bot turn in NW_HIST: ids[prev_a..prev_b) */
   /* NW_HIST="question|answer|question|answer": earlier turns of the chat */
   if (getenv("NW_HIST")) {
     char h[1024];
@@ -30,7 +30,9 @@ int main(int argc, char **argv) {
     int who = 0;
     for (char *s = strtok(h, "|"); s; s = strtok(NULL, "|"), who ^= 1) {
       ids[n++] = who ? m.tok_b : m.tok_u;
+      int a = n;
       n += nwai_encode(&m, s, ids + n, 100);
+      if (who) prev_a = a, prev_b = n;
     }
   }
   ids[n++] = m.tok_u;
@@ -51,6 +53,9 @@ int main(int argc, char **argv) {
     float minp = getenv("NW_MINP") ? atof(getenv("NW_MINP")) : 0.0f;
     float rep = getenv("NW_REP") ? atof(getenv("NW_REP")) : 1.0f;
     if (sample && rep > 1.0f) nwai_penalize(logits, ids + start, n - start, rep);
+    /* like the app: the first words of a reply shy away from the previous reply */
+    float pp = getenv("NW_PREV") ? atof(getenv("NW_PREV")) : 1.0f;
+    if (sample && pp > 1.0f && n - start < 3) nwai_penalize(logits, ids + prev_a, prev_b - prev_a, pp);
     uint32_t rnd = ((uint32_t)rand() << 17) ^ ((uint32_t)rand() << 2) ^ ((uint32_t)rand() >> 13);
     int t = sample ? nwai_sample(&m, logits, temp, topk, minp, rnd) : nwai_sample(&m, logits, 0, 1, 0, 0);
     if (t == m.tok_eos || t == m.tok_u) break;

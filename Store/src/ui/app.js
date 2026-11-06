@@ -272,6 +272,7 @@ async function askRemove(name) {
 function run(target, label) {
   $("#b-title").textContent = label;
   $("#b-text").textContent = "Preparing…";
+  setBar(null);
   $("#busy").classList.remove("hidden");
   window.store.apply({ target, label });
 }
@@ -318,7 +319,24 @@ $("#update-btn").addEventListener("click", async () => {
   if (!(await window.store.restartToUpdate())) toast("Wait until the calculator is done, then restart.", "bad");
 });
 window.store.version().then((v) => { $("#version").textContent = `Numstore ${v}`; });
-window.store.on("progress", (p) => { $("#b-text").textContent = p.detail ? `${p.text} ${p.detail}` : p.text; });
+// a real bar while writing (nwlink reports a percentage), a moving one before that
+function setBar(percent) {
+  const bar = $("#busy .progress");
+  bar.classList.toggle("known", percent != null);
+  bar.firstElementChild.style.width = percent != null ? `${percent}%` : "";
+}
+window.store.on("progress", (p) => {
+  const d = p.detail;
+  if (d && typeof d === "object") {
+    const left = d.eta == null || d.percent >= 100 ? "" :
+      d.eta >= 90 ? ` · about ${Math.round(d.eta / 60)} min left` : ` · about ${Math.max(1, d.eta)} s left`;
+    $("#b-text").textContent = `${p.text} ${d.percent}%${left}`;
+    setBar(d.percent);
+  } else {
+    $("#b-text").textContent = d ? `${p.text} ${d}` : p.text;
+    setBar(null);
+  }
+});
 window.store.on("done", (d) => {
   $("#busy").classList.add("hidden");
   if (d.ok) toast(`${d.label.replace(/^Installing/, "Installed").replace(/^Removing/, "Removed").replace(/^Switching/, "Switched")} . The calculator restarts: plug it back in to see the change.`, "ok");

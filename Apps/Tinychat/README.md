@@ -4,7 +4,8 @@ A small chatbot that runs on the calculator itself, without a connection.
 
 - The language model is Llama-style, with 3.7 million parameters stored in 4 bits (trained with quantisation-aware training) and a 1024-piece vocabulary. It runs at about 14 tokens per second.
 - Built-in helpers answer maths (`12*(3+4)`, `sqrt 2`, `15% of 80`), prime checks and factors, and unit conversions directly. The model answers everything else.
-- It comes in two sizes. **Full** (`models/tinychat-4m-4bit.bin`, 2.19 MB installed) gets 270 of 280 facts right. **Small** (`models/tinychat-2m-4bit.bin`, 1.31 MB installed) is run 8 retrained for 4 bits. It gets 248 of 280 and leaves about 1.1 MB for other apps.
+- It remembers the previous exchange, so follow-ups work: "another" after a joke, "yes" after "Want another one?", "how do you know?", "and Spain?" after a capital. It forgets anything older, which keeps it fast.
+- It comes in two sizes. **Full** (`models/tinychat-4m-4bit.bin`, 2.19 MB installed) gets 449 of 497 facts right. **Small** (`models/tinychat-2m-4bit.bin`, 1.31 MB installed) gets 423 of 497 and leaves about 1.1 MB for other apps. Both were fine-tuned on 2026-11-06 with everyday facts, reactions, questions about TinyChat itself and follow-up chats (`train/everyday.py`); `train/score_chat.py` scores 30 such situations (Full 24/30, Small 22/30, the earlier Full about 5/30).
 - The engine also reads the older int8 format: `models/tinychat-2m-int8.bin` is the previous 2-million-parameter model, faster (about 18 tokens per second) but weaker.
 - Keys:
   - EXE or OK: send
@@ -19,7 +20,7 @@ A small chatbot that runs on the calculator itself, without a connection.
 |---|---|
 | `chat/src/` | The app: `main.c` (chat screen), `nwai.c` (model inference, int8/4-bit, DSP kernels), `helpers.c` (maths/units), `sbrk.c`, `icon.png` |
 | `chat/host/` | PC tools: `test.c` runs the same engine on a PC, `helpers_test.c` tests the helpers, `make_icon.py` draws the icon |
-| `train/` | Training: `prep.py` (dataset), `knowledge.py` (facts, small talk), `train.py`, `model.py`, `export.py` (writes `model.bin`), `check_logits.py`, `eval_facts.py`, `sweep.sh` |
+| `train/` | Training: `prep.py` (dataset), `knowledge.py` (facts, small talk), `everyday.py` (everyday facts, reactions, questions about itself, follow-up chats), `train.py`, `model.py`, `export.py` (writes `model.bin`), `check_logits.py`, `eval_facts.py`, `replay.py` (replays a real conversation with the app's memory), `sweep.sh` |
 | `models/` | Ready-to-install model files |
 
 ### Build and install

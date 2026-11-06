@@ -93,17 +93,33 @@ function modulesDir() {
 function run(js, args, onLine) {
   return new Promise((res, rej) => {
     const env = { ...process.env, ELECTRON_RUN_AS_NODE: "1", NODE_PATH: modulesDir() };
-    const p = spawn(process.execPath, [js, ...args], { env, windowsHide: true });
+    const tty = path.join(__dirname, "tty.js").replace("app.asar", "app.asar.unpacked");
+    const p = spawn(process.execPath, ["-r", tty, js, ...args], { env, windowsHide: true });
     let out = "";
+    // nwlink prints its progress all along (see tty.js); a minute of silence means it is stuck
+    // (it once waited forever after erasing the calculator), so stop it instead of hanging
+    let stuck = false, idle;
+    const arm = () => {
+      clearTimeout(idle);
+      idle = setTimeout(() => { stuck = true; p.kill(); }, 60000);
+    };
+    arm();
     const feed = (d) => {
+      arm();
       const s = d.toString();
       out += s;
-      for (const line of s.split(/[\r\n]+/)) if (line.trim()) onLine && onLine(line.trim());
+      const plain = s.replace(/\x1b\[[0-9;?]*[A-Za-z]/g, "\n"); // progress redraws use cursor codes
+      for (const line of plain.split(/[\r\n]+/)) if (line.trim()) onLine && onLine(line.trim());
     };
     p.stdout.on("data", feed);
     p.stderr.on("data", feed);
-    p.on("error", rej);
-    p.on("close", (code) => (code === 0 ? res(out) : rej(new Error(lastError(out) || `nwlink failed (${code})`))));
+    p.on("error", (e) => { clearTimeout(idle); rej(e); });
+    p.on("close", (code) => {
+      clearTimeout(idle);
+      if (stuck) rej(new Error("The calculator stopped responding. Unplug it, plug it back in and try again."));
+      else if (code === 0) res(out);
+      else rej(new Error(lastError(out) || `nwlink failed (${code})`));
+    });
   });
 }
 
@@ -119,7 +135,13 @@ async function install(apps, onStep) {
   onStep && onStep("Writing to the calculator…");
   const args = ["install-nwa", ...apps.map((a) => a.nwa)];
   if (apps.some((a) => a.data)) args.push("--external-data", apps.map((a) => a.data || "").join(","));
-  const onLine = (line) => onStep && /\d+%|ETA|\|/.test(line) && onStep("Writing to the calculator…", line);
+  // "Upload [=====-----] 42% | ETA: 30s" -> { percent: 42, eta: 30 }
+  const onLine = (line) => {
+    const m = /(\d+)%/.exec(line);
+    if (!m || !onStep) return;
+    const eta = /ETA:\s*(\d+)s/.exec(line);
+    onStep("Writing to the calculator…", { percent: +m[1], eta: eta ? +eta[1] : null });
+  };
   try {
     return await run(js, args, onLine);
   } catch (e) {

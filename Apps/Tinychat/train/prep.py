@@ -173,6 +173,12 @@ sources["knowledge"] = ([fmt(t, casual_rate=0.7) for t in kn if ok(t)], 1)
 print(f"knowledge: {nfacts} facts")
 # open chat: vague messages, single words and statements (see knowledge.open_chat)
 sources["openchat"] = ([fmt(t, casual_rate=0.3) for t in knowledge.open_chat(random.Random(3), 150000) if ok(t)], 1)
+# follow-ups: the answer depends on the earlier turns ("another", "yes", "how do you know?"...).
+# User texts are kept as written, since some answers quote them.
+import everyday
+facts_only = knowledge.capitals() + knowledge.definitions() + knowledge.facts() + everyday.definitions() + everyday.facts()
+fu = everyday.followups(random.Random(4), 300000, knowledge.RAW["JOKES"] + everyday.JOKES, facts_only, knowledge.capitals())
+sources["followups"] = ([fmt(t, casual_rate=0) for t in fu if ok(t)], 1)
 
 convs = []
 for name, (items, rep) in sources.items():

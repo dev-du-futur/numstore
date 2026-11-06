@@ -170,7 +170,8 @@ def jokes():
     qs = ["Tell me a joke.", "tell me a joke", "tell a joke", "tell me a joke!", "say something funny",
           "do you know any jokes?", "joke please", "a joke", "joke", "make me laugh", "can you tell me a joke?",
           "tell me a funny joke", "another joke", "tell me another joke", "know any jokes", "say a joke"]
-    return [(qs, [j]) for j in RAW["JOKES"]]
+    import everyday
+    return [(qs, [j]) for j in RAW["JOKES"] + everyday.JOKES]
 
 
 def smalltalk():
@@ -203,8 +204,6 @@ def smalltalk():
         (["can you help me", "help me", "can you help me with my homework", "i need help", "help",
           "can u help me", "i have a question"],
          ["Sure! What do you need help with?", "Of course! What's your question?"]),
-        (["bye", "goodbye", "see you", "see you later", "bye bye", "i have to go", "cya"],
-         ["Bye! Talk to you soon.", "Goodbye! Have a great day."]),
         (["good night", "goodnight", "night", "im going to sleep"],
          ["Good night! Sleep well."]),
         (["good morning", "morning"], ["Good morning! How can I help you today?"]),
@@ -212,10 +211,6 @@ def smalltalk():
          ["Not much, just living in your calculator! What's up with you?"]),
         (["im bored", "i am bored", "im so bored", "entertain me"],
          ["Let's chat! Ask me a question, or ask me for a joke."]),
-        (["haha", "hahaha", "lol", "lmao", "thats funny", "funny", "xd", "hehe", "haha good one"],
-         ["Glad it made you laugh! Want another one?", "Haha, glad you liked it!"]),
-        (["ok", "okay", "cool", "nice", "wow"],
-         ["Anything else you'd like to know?", "Glad you like it! What else can I do for you?"]),
         (["i love you", "you are cool", "you are nice", "i like you"],
          ["Thank you! I like chatting with you too."]),
     ]
@@ -244,7 +239,7 @@ def open_chat(rng, n):
         k = rng.random()
         if k < 0.14:
             q = rng.choice(["what", "what ?", "what?", "huh", "huh?", "?", "??", "hmm", "what do you mean",
-                            "i dont understand", "what is it", "say what", "eh", "um", "uh", "and", "so", "wait"])
+                            "i dont understand", "what is it", "say what", "eh", "um", "uh", "and", "so"])
             a = rng.choice(["Sorry, I didn't get that. Can you ask in another way?", "What would you like to know?",
                             "Hmm, can you tell me a bit more?"])
         elif k < 0.24:
@@ -296,7 +291,8 @@ def open_chat(rng, n):
 
 
 def all_items():
-    return capitals() + definitions() + facts() + jokes() + smalltalk()
+    import everyday  # everyday knowledge, TinyChat itself, reactions, requests (added 2026-11-06)
+    return capitals() + definitions() + facts() + jokes() + smalltalk() + everyday.all_items()
 
 
 def chats(n_per_fact, casual, rng):
@@ -309,10 +305,12 @@ def chats(n_per_fact, casual, rng):
         for _ in range(n_per_fact):
             turns = []
             r = rng.random()
+            # an unrelated earlier exchange, often: the app keeps the last one in memory, and a
+            # new question must still get its own answer
             if r < 0.15:
                 g = rng.choice(greet)
                 turns += [("u", casual(g[0])), ("b", g[1])]
-            elif r < 0.30:
+            elif r < 0.50:
                 q2, a2 = rng.choice(items)
                 turns += [("u", casual(rng.choice(q2))), ("b", rng.choice(a2))]
             turns += [("u", casual(rng.choice(qs))), ("b", rng.choice(answers))]
