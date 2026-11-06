@@ -98,6 +98,7 @@
     "dmg": {
       "title": "Numstore ${version}"
     },
-    "afterPack": "scripts/after-pack.js"
+    "afterPack": "scripts/after-pack.js",
+    "npmRebuild": false
   }
 }
