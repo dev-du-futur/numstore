@@ -1,12 +1,10 @@
 # TinyChat
 
-
-
 A small chatbot that runs on the calculator itself, without a connection.
 
-- The language model is Llama-style, with about 2 million parameters, int8 weights and a 1024-piece vocabulary. It runs at about 18 tokens per second.
+- The language model is Llama-style, with 3.7 million parameters stored in 4 bits (trained with quantisation-aware training) and a 1024-piece vocabulary. It runs at about 14 tokens per second.
 - Built-in helpers answer maths (`12*(3+4)`, `sqrt 2`, `15% of 80`), prime checks and factors, and unit conversions directly. The model answers everything else.
-- The engine also supports 4-bit weights (format version 2), for a bigger model of about 3.7 million parameters at about 14 tokens per second.
+- The engine also reads the older int8 format: `models/tinychat-2m-int8.bin` is the previous 2-million-parameter model, faster (about 18 tokens per second) but weaker.
 - Keys:
   - EXE or OK: send
   - Backspace: delete
@@ -28,7 +26,7 @@ A small chatbot that runs on the calculator itself, without a connection.
 You need the [NumWorks SDK tools](https://www.numworks.com/engineering/software/build/) (`arm-none-eabi-gcc`, `nwlink`).
 
 ```bash
-cp models/tinychat-2m-int8.bin chat/model.bin
+cp models/tinychat-4m-4bit.bin chat/model.bin
 cd chat
 make build check     # check = full link, catches missing functions
 nwlink install-nwa --external-data model.bin output/app.nwa
