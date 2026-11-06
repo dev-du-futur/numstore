@@ -35,9 +35,9 @@ svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width:
 }
 .tb-title { text-align: center; }
 .tb-right { justify-self: end; display: flex; align-items: center; gap: 10px; }
-.battery { width: 26px; height: 12px; border: 2px solid var(--white); border-radius: 2px; padding: 1px; position: relative; }
-.battery::after { content: ""; position: absolute; right: -5px; top: 2px; width: 2px; height: 4px; background: var(--white); border-radius: 0 1px 1px 0; }
-.battery span { display: block; height: 100%; background: var(--white); width: 0; }
+/* apps storage gauge (used part filled), not a battery: the store can't read the battery */
+.gauge { width: 70px; height: 6px; background: #ffffff55; border-radius: 3px; overflow: hidden; }
+.gauge span { display: block; height: 100%; background: var(--white); width: 0; }
 
 .notice { margin: 16px 24px 0; padding: 12px 16px; background: var(--white); border: 1px solid var(--line); border-left: 4px solid var(--orange); border-radius: 6px; display: flex; gap: 10px; align-items: baseline; }
 .notice span { color: var(--grey); }

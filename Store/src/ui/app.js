@@ -48,7 +48,8 @@ function renderCalc() {
   $("#calc-sub").textContent = sub;
   const ok = c.connected && c.total && !c.error;
   $("#tb-free").textContent = ok ? `${mb(c.total - c.used)} FREE` : "";
-  $("#tb-batt").style.width = ok ? Math.max(4, 100 * (c.total - c.used) / c.total) + "%" : "0";
+  $(".gauge").classList.toggle("hidden", !ok);
+  $("#tb-batt").style.width = ok ? (100 * c.used / c.total) + "%" : "0";
 }
 
 function renderStorage() {
