@@ -4,9 +4,10 @@ const path = require("path");
 const device = require("./device");
 const installer = require("./installer");
 const nwi = require("./nwi");
-const { Catalog } = require("./catalog");
+const { Catalog, variantFor } = require("./catalog");
+const updater = require("./updater");
 
-let win, catalog;
+let win, catalog, updates;
 let calc = { connected: false };
 let busy = false;      // an install is running: don't touch USB
 let scanTimer = null;
@@ -30,6 +31,7 @@ function state() {
     const img = a.icon ? nwi.decode(a.icon) : null;
     return {
       name: a.name, size: a.size, id: match ? match.id : null,
+      variant: match ? variantFor(match, a.size) : null,
       icon: img ? { w: img.width, h: img.height, rgba: img.rgba.toString("base64") } : null,
     };
   });
@@ -39,12 +41,18 @@ function state() {
       ? { connected: true, model: calc.model, version: calc.version, used: calc.used, total: calc.total, error: calc.error }
       : { connected: false, error: calc.error, restarted: Date.now() - lastWrite < 180000 },
     installed,
-    catalog: apps.map((a) => ({
-      id: a.id, name: a.name, version: a.version, author: a.author, description: a.description,
-      category: a.category, size: a.size, source: a.source, downloaded: a.downloaded !== false,
-      icon: a.iconPath ? iconData(a.iconPath) : a.iconUrl || null,
-      installed: installed.some((i) => i.name === a.name),
-    })),
+    catalog: apps.map((a) => {
+      const inst = installed.find((i) => i.name === a.name);
+      return {
+        id: a.id, name: a.name, version: a.version, author: a.author, description: a.description,
+        category: a.category, source: a.source,
+        icon: a.iconPath ? iconData(a.iconPath) : a.iconUrl || null,
+        variants: a.variants.map((v) => ({ id: v.id, label: v.label, description: v.description, size: v.size, ready: v.ready })),
+        defaultVariant: a.defaultVariant || a.variants[0].id,
+        installed: !!inst,
+        installedVariant: inst ? inst.variant : null,
+      };
+    }),
     onlineError: catalog.remoteError,
   };
 }
@@ -79,26 +87,27 @@ function friendly(e) {
 
 // ---- install / remove ----------------------------------------------------------
 // The calculator always gets the whole list of apps again (that's how nwlink works),
-// so every change = apps that stay (in their order) + the new one.
-function sourcesFor(names) {
-  const apps = catalog.all();
-  return names.map((n) => apps.find((a) => a.name === n) || null);
-}
-
-async function apply(targetNames, label) {
+// so every change = apps that stay (in their order, same size variant) + the new one.
+// A target is a list of { name, variant }.
+async function apply(target, label) {
   if (busy) return;
   busy = true;
   push();
   const step = (text, detail) => send("progress", { label, text, detail });
   try {
-    let srcs = sourcesFor(targetNames);
-    srcs = await Promise.all(srcs.map((s) => catalog.fetchApp(s, step)));
+    const apps = catalog.all();
+    const files = [];
+    for (const t of target) {
+      const a = apps.find((x) => x.name === t.name);
+      if (!a) throw new Error(`${t.name} is not in the store`);
+      files.push(await catalog.fetchVariant(a, t.variant, step));
+    }
     if (!device.findDevice()) throw new Error("Calculator not connected");
-    if (srcs.length === 0) {
+    if (files.length === 0) {
       step("Removing the app…");
       await device.removeAll();
     } else {
-      await installer.install(srcs.map((s) => ({ nwa: s.nwaPath, data: s.dataPath })), step);
+      await installer.install(files, step);
     }
     step("Done");
     send("done", { ok: true, label });
@@ -114,21 +123,32 @@ async function apply(targetNames, label) {
 ipcMain.handle("state", () => state());
 ipcMain.handle("rescan", () => rescan());
 
-ipcMain.handle("plan", (_e, { action, id, name }) => {
-  // what would happen: list of names after the change, apps that would be lost, space
+ipcMain.handle("plan", (_e, { action, id, variant, name }) => {
+  // what would happen: apps after the change, apps that would be lost, space used
   const apps = catalog.all();
-  const current = (calc.apps || []).map((a) => a.name);
+  const current = (calc.apps || []).map((a) => {
+    const c = apps.find((x) => x.name === a.name);
+    return { name: a.name, variant: c ? variantFor(c, a.size) : null, known: !!c };
+  });
   let target;
   if (action === "install") {
     const a = apps.find((x) => x.id === id);
-    target = current.filter((n) => n !== a.name).concat(a.name);
+    const v = variant || a.defaultVariant || a.variants[0].id;
+    const at = current.findIndex((t) => t.name === a.name);
+    target = current.slice();
+    if (at >= 0) target[at] = { name: a.name, variant: v, known: true }; // switching size keeps its place
+    else target.push({ name: a.name, variant: v, known: true });
   } else {
-    target = current.filter((n) => n !== name);
+    target = current.filter((t) => t.name !== name);
   }
-  const unknown = target.filter((n) => !apps.some((a) => a.name === n));
-  const kept = target.filter((n) => !unknown.includes(n));
-  const size = kept.reduce((s, n) => s + (apps.find((a) => a.name === n).size || 0), 0);
-  return { target: kept, lost: unknown, size, total: calc.total || 0 };
+  const lost = target.filter((t) => !t.known).map((t) => t.name);
+  const kept = target.filter((t) => t.known).map(({ name, variant }) => ({ name, variant }));
+  const sizeOf = (t) => {
+    const a = apps.find((x) => x.name === t.name);
+    return (a.variants.find((v) => v.id === t.variant) || a.variants[0]).size || 0;
+  };
+  const size = kept.reduce((s, t) => s + sizeOf(t), 0);
+  return { target: kept, lost, size, total: calc.total || 0 };
 });
 
 ipcMain.handle("apply", (_e, { target, label }) => { apply(target, label); return true; });
@@ -168,6 +188,8 @@ ipcMain.handle("add-file", async () => {
   }
 });
 
+ipcMain.handle("restart-update", () => updates.restart());
+ipcMain.handle("version", () => app.getVersion());
 ipcMain.handle("forget", (_e, id) => { catalog.forget(id); push(); });
 ipcMain.handle("open", (_e, url) => { if (/^https:\/\//.test(url)) shell.openExternal(url); });
 
@@ -204,6 +226,7 @@ app.whenReady().then(async () => {
   installer.setDataDir(app.getPath("userData"));
   catalog = new Catalog(bundledDir, app.getPath("userData"));
   createWindow();
+  updates = updater.start({ send, isBusy: () => busy });
   device.watch(() => scheduleScan(1200));
   rescan();
   catalog.refreshRemote().then(push);
@@ -211,3 +234,4 @@ app.whenReady().then(async () => {
 });
 
 app.on("window-all-closed", () => app.quit());
+app.on("activate", () => { if (!BrowserWindow.getAllWindows().length) createWindow(); });

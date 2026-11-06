@@ -4,7 +4,16 @@ Apps for the NumWorks calculator, and **Numstore**, a desktop app to install and
 
 ## Download Numstore
 
-**[Download Numstore for Windows](https://github.com/dev-du-futur/numstore/releases/latest)**: run `Numstore-Setup-x.y.z.exe`.
+**[Download the latest version](https://github.com/dev-du-futur/numstore/releases/latest)**:
+
+- **Windows:** `Numstore-Setup-x.y.z.exe`. Windows may warn that the publisher is unknown: click **More info**, then **Run anyway**.
+- **Mac (Apple Silicon, M1 and later):** `Numstore-x.y.z-mac-arm64.dmg`. For an older Intel Mac, take `…-mac-x64.dmg`. Open the `.dmg` and drag Numstore into Applications. The app isn't signed by Apple, so the first launch is blocked. To allow it:
+  1. Try to open it once.
+  2. Open **System Settings → Privacy & Security** and click **Open Anyway** next to Numstore.
+
+  Or run this in Terminal: `xattr -dr com.apple.quarantine /Applications/Numstore.app`.
+
+On Windows, Numstore updates itself: when a new version is out, it downloads it and offers **Restart now**. On Mac, it shows a **Download** button instead, because an app that isn't signed by Apple can't replace itself.
 
 ![Numstore](Store/docs/screenshot.png)
 
@@ -44,11 +53,22 @@ npm start            # run it
 npm run dist         # Windows installer in Store/release/
 ```
 
+### Publishing a release (Windows and Mac)
+
+GitHub builds both versions on its own machines (`.github/workflows/release.yml`), so you don't need a Mac:
+
+1. Raise `version` in `Store/package.json` and push.
+2. Tag that version and push the tag: `git tag v0.2.0 && git push origin v0.2.0`.
+3. About 10 minutes later, the release has the Windows installer, the Mac `.dmg` and `.zip` files, and the `latest*.yml` files the auto-update reads.
+
+The workflow can also run by hand from the Actions tab. That builds both versions without publishing them, and leaves them as downloadable artifacts on the run.
+
 | Path | What it is |
 |---|---|
 | `Store/src/main.js` | Window, state, install and remove logic |
 | `Store/src/device.js` | Reads the calculator over USB (DFU): model, free space, installed apps and their icons. It also erases the apps area when the last app is removed |
 | `Store/src/installer.js` | Writes apps with `nwlink install-nwa`, and measures app sizes |
-| `Store/src/catalog.js` | Built-in apps, the online `catalog.json`, and apps added from files |
+| `Store/src/catalog.js` | Built-in apps, the online `catalog.json`, and apps added from files. Apps can come in several sizes (`variants` in `numstore.json`) |
+| `Store/src/updater.js` | Self-update from GitHub releases |
 | `Store/src/ui/` | The interface |
 | `Store/scripts/` | Catalog builder and icon drawer |

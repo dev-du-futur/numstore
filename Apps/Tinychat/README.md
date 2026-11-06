@@ -4,6 +4,7 @@ A small chatbot that runs on the calculator itself, without a connection.
 
 - The language model is Llama-style, with 3.7 million parameters stored in 4 bits (trained with quantisation-aware training) and a 1024-piece vocabulary. It runs at about 14 tokens per second.
 - Built-in helpers answer maths (`12*(3+4)`, `sqrt 2`, `15% of 80`), prime checks and factors, and unit conversions directly. The model answers everything else.
+- It comes in two sizes. **Full** (`models/tinychat-4m-4bit.bin`, 2.19 MB installed) gets 270 of 280 facts right. **Small** (`models/tinychat-2m-4bit.bin`, 1.31 MB installed) is run 8 retrained for 4 bits. It gets 248 of 280 and leaves about 1.1 MB for other apps.
 - The engine also reads the older int8 format: `models/tinychat-2m-int8.bin` is the previous 2-million-parameter model, faster (about 18 tokens per second) but weaker.
 - Keys:
   - EXE or OK: send

@@ -3,6 +3,9 @@
 //  - online:  catalog.json at the root of the GitHub repo; new or newer apps are
 //             downloaded on demand and cached
 //  - library: .nwa files the user added from their computer
+//
+// Every app has one or more variants (e.g. TinyChat "small" and "full"): same .nwa,
+// different data file. Apps without variants get a single "default" one.
 const fs = require("fs");
 const path = require("path");
 const https = require("https");
@@ -30,11 +33,13 @@ function fetchBuf(url, redirects = 5) {
   });
 }
 
-function newer(a, b) { // semver-ish: is a > b ?
+function newer(a, b) { // is version a > b ?
   const pa = String(a || "0").split(".").map(Number), pb = String(b || "0").split(".").map(Number);
   for (let i = 0; i < 3; i++) if ((pa[i] || 0) !== (pb[i] || 0)) return (pa[i] || 0) > (pb[i] || 0);
   return false;
 }
+
+const exists = (p) => p && fs.existsSync(p);
 
 class Catalog {
   constructor(bundledDir, dataDir) {
@@ -49,19 +54,40 @@ class Catalog {
 
   bundled() {
     const idx = readJSON(path.join(this.bundledDir, "index.json"), { apps: [] });
-    return idx.apps.map((a) => ({
-      ...a,
-      source: "bundled",
-      nwaPath: path.join(this.bundledDir, a.id, "app.nwa"),
-      dataPath: a.data ? path.join(this.bundledDir, a.id, "data.bin") : null,
-      iconPath: path.join(this.bundledDir, a.id, "icon.png"),
-    }));
+    return idx.apps.map((a) => {
+      const dir = path.join(this.bundledDir, a.id);
+      return {
+        ...a,
+        source: "bundled",
+        nwaPath: path.join(dir, "app.nwa"),
+        iconPath: path.join(dir, "icon.png"),
+        variants: a.variants.map((v) => ({
+          ...v, ready: true,
+          dataPath: v.data ? path.join(dir, `data-${v.id}.bin`) : null,
+        })),
+      };
+    });
   }
 
-  cached(id) {
-    const dir = path.join(this.cacheDir, id);
-    const meta = readJSON(path.join(dir, "meta.json"), null);
-    return meta ? { meta, dir } : null;
+  // an online app, with whatever of it is already cached
+  online(r) {
+    const dir = path.join(this.cacheDir, r.id);
+    const meta = readJSON(path.join(dir, "meta.json"), {});
+    const same = meta.version === r.version;
+    const nwaPath = path.join(dir, "app.nwa");
+    return {
+      ...r,
+      source: "online",
+      dir,
+      nwaPath: same && exists(nwaPath) ? nwaPath : null,
+      iconPath: exists(path.join(dir, "icon.png")) ? path.join(dir, "icon.png") : null,
+      iconUrl: r.icon,
+      variants: r.variants.map((v) => {
+        const dp = path.join(dir, `data-${v.id}.bin`);
+        const ready = same && exists(nwaPath) && (!v.data || exists(dp));
+        return { ...v, url: v.data, dataPath: v.data ? dp : null, ready };
+      }),
+    };
   }
 
   library() {
@@ -72,8 +98,9 @@ class Catalog {
       return {
         ...m, id, source: "library",
         nwaPath: path.join(dir, "app.nwa"),
-        dataPath: m.hasData ? path.join(dir, "data.bin") : null,
         iconPath: null,
+        variants: [{ id: "default", label: "", size: m.size, ready: true,
+          dataPath: m.hasData ? path.join(dir, "data.bin") : null }],
       };
     }).filter(Boolean);
   }
@@ -81,7 +108,7 @@ class Catalog {
   async refreshRemote() {
     try {
       const idx = JSON.parse((await fetchBuf(REMOTE_INDEX)).toString("utf8"));
-      this.remote = idx.apps || [];
+      this.remote = (idx.apps || []).filter((a) => Array.isArray(a.variants));
       this.remoteError = null;
     } catch (e) {
       this.remoteError = e.message;
@@ -94,37 +121,28 @@ class Catalog {
     for (const a of this.bundled()) byId.set(a.id, a);
     for (const r of this.remote) {
       const have = byId.get(r.id);
-      const c = this.cached(r.id);
-      if (c && c.meta.version === r.version) {
-        if (!have || newer(r.version, have.version))
-          byId.set(r.id, { ...r, source: "online", downloaded: true, ...this.paths(c.dir, r) });
-      } else if (!have || newer(r.version, have.version)) {
-        byId.set(r.id, { ...r, source: "online", downloaded: false, iconUrl: r.icon });
-      }
+      if (!have || newer(r.version, have.version)) byId.set(r.id, this.online(r));
     }
     for (const l of this.library()) if (!byId.has(l.id)) byId.set(l.id, l);
     return [...byId.values()];
   }
 
-  paths(dir, r) {
-    return {
-      nwaPath: path.join(dir, "app.nwa"),
-      dataPath: r.data ? path.join(dir, "data.bin") : null,
-      iconPath: fs.existsSync(path.join(dir, "icon.png")) ? path.join(dir, "icon.png") : null,
-    };
-  }
-
-  // make sure an online app's files are on disk; returns the entry with paths
-  async fetchApp(app, onStep) {
-    if (app.source !== "online" || app.downloaded) return app;
-    const dir = path.join(this.cacheDir, app.id);
-    fs.mkdirSync(dir, { recursive: true });
-    onStep && onStep(`Downloading ${app.name}…`);
-    fs.writeFileSync(path.join(dir, "app.nwa"), await fetchBuf(app.nwa));
-    if (app.data) fs.writeFileSync(path.join(dir, "data.bin"), await fetchBuf(app.data));
-    if (app.icon) try { fs.writeFileSync(path.join(dir, "icon.png"), await fetchBuf(app.icon)); } catch (e) {}
-    fs.writeFileSync(path.join(dir, "meta.json"), JSON.stringify({ version: app.version }));
-    return { ...app, downloaded: true, ...this.paths(dir, app) };
+  // make sure one variant of an app is on disk; returns { nwa, data }
+  async fetchVariant(app, variantId, onStep) {
+    const v = app.variants.find((x) => x.id === variantId) || app.variants[0];
+    if (app.source === "online" && !v.ready) {
+      fs.mkdirSync(app.dir, { recursive: true });
+      onStep && onStep(`Downloading ${app.name}…`);
+      const meta = readJSON(path.join(app.dir, "meta.json"), {});
+      if (meta.version !== app.version || !exists(path.join(app.dir, "app.nwa"))) {
+        for (const f of fs.readdirSync(app.dir)) fs.rmSync(path.join(app.dir, f), { force: true });
+        fs.writeFileSync(path.join(app.dir, "app.nwa"), await fetchBuf(app.nwa));
+        if (app.icon) try { fs.writeFileSync(path.join(app.dir, "icon.png"), await fetchBuf(app.icon)); } catch (e) {}
+      }
+      if (v.url) fs.writeFileSync(v.dataPath, await fetchBuf(v.url));
+      fs.writeFileSync(path.join(app.dir, "meta.json"), JSON.stringify({ version: app.version }));
+    }
+    return { nwa: path.join(app.source === "online" ? app.dir : path.dirname(app.nwaPath), "app.nwa"), data: v.dataPath };
   }
 
   addToLibrary(meta, nwaFile, dataFile) {
@@ -143,4 +161,15 @@ class Catalog {
   }
 }
 
-module.exports = { Catalog };
+// Which variant of an app is installed: the one whose size matches what the calculator holds
+function variantFor(app, installedSize) {
+  if (!app || !app.variants.length) return null;
+  let best = app.variants[0], d = Infinity;
+  for (const v of app.variants) {
+    const dd = Math.abs((v.size || 0) - installedSize);
+    if (dd < d) { d = dd; best = v; }
+  }
+  return best.id;
+}
+
+module.exports = { Catalog, variantFor };

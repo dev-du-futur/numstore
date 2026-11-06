@@ -3,6 +3,7 @@ const $ = (s) => document.querySelector(s);
 const COLORS = ["#4a5568", "#ffb734", "#7f8ea3", "#c97b2a", "#2f3b4c", "#a7b0bd", "#e0a040", "#5f6b7a"];
 let S = null;            // state from the main process
 let tab = "store";
+const chosen = {};       // app id -> size variant picked on its card
 let preview = null;      // { add: name, size } or { remove: name } while hovering a button
 
 const mb = (b) => (b / 1048576).toFixed(b >= 1048576 * 10 ? 0 : 2).replace(/\.?0+$/, "") + " MB";
@@ -76,7 +77,8 @@ function renderStorage() {
   let after = used;
   if (preview?.add) {
     const seg = document.createElement("div");
-    seg.className = "seg preview" + (used + preview.size > c.total ? " over" : "");
+    const old = preview.remove ? S.installed.find((a) => a.name === preview.remove)?.size || 0 : 0;
+    seg.className = "seg preview" + (used - old + preview.size > c.total ? " over" : "");
     seg.style.width = Math.min(100, 100 * preview.size / c.total) + "%";
     seg.style.background = colorFor(preview.add);
     bar.appendChild(seg);
@@ -99,12 +101,12 @@ function matches(a) {
 }
 
 function renderStore() {
-  const v = $("#view-store");
-  v.innerHTML = "";
+  const view = $("#view-store");
+  view.innerHTML = "";
   const list = S.catalog.filter(matches);
   $("#n-store").textContent = S.catalog.length || "";
   if (!list.length) {
-    v.innerHTML = `<div class="empty"><b>No apps found</b>Try another search.</div>`;
+    view.innerHTML = `<div class="empty"><b>No apps found</b>Try another search.</div>`;
     return;
   }
   for (const a of list) {
@@ -114,11 +116,27 @@ function renderStore() {
     card.insertAdjacentHTML("beforeend", `<div class="name">${esc(a.name)}</div>
       <div class="meta">${esc([a.category, a.author, a.version && "v" + a.version].filter(Boolean).join(" · "))}</div>
       <p class="desc">${esc(a.description)}</p>`);
+    const v = pickVariant(a);
+    const variant = a.variants.find((x) => x.id === v);
+    if (a.variants.length > 1) {
+      const seg = document.createElement("div");
+      seg.className = "sizes";
+      for (const x of a.variants) {
+        const k = document.createElement("button");
+        k.className = "size" + (x.id === v ? " on" : "");
+        k.innerHTML = `${esc(x.label)}<span>${mb(x.size)}</span>`;
+        k.onclick = () => { chosen[a.id] = x.id; render(); };
+        seg.appendChild(k);
+      }
+      card.appendChild(seg);
+      card.insertAdjacentHTML("beforeend", `<div class="size-desc">${esc(variant.description)}</div>`);
+    }
     const foot = document.createElement("div");
     foot.className = "card-foot";
+    const instLabel = a.installed ? a.variants.find((x) => x.id === a.installedVariant)?.label : "";
     foot.insertAdjacentHTML("beforeend", a.installed
-      ? `<span class="badge on">Installed · ${mb(a.size || 0)}</span>`
-      : `<span class="badge">${a.size ? mb(a.size) : ""}${a.source === "online" && !a.downloaded ? " · download" : ""}</span>`);
+      ? `<span class="badge on">Installed${instLabel && a.variants.length > 1 ? " · " + esc(instLabel) : ""}</span>`
+      : `<span class="badge">${a.variants.length > 1 ? "" : mb(variant.size)}${variant.ready === false ? " · download" : ""}</span>`);
     if (a.source === "library" && !a.installed) {
       const f = document.createElement("button");
       f.className = "link"; f.textContent = "Forget";
@@ -126,21 +144,36 @@ function renderStore() {
       foot.appendChild(f);
     }
     const b = document.createElement("button");
-    if (a.installed) {
+    if (a.installed && a.installedVariant === v) {
       b.className = "key"; b.textContent = "Remove";
       b.onclick = () => askRemove(a.name);
       hoverPreview(b, { remove: a.name });
+    } else if (a.installed) {
+      b.className = "key orange"; b.textContent = `Switch to ${variant.label}`;
+      b.onclick = () => askInstall(a, v);
+      hoverPreview(b, { add: a.name, size: variant.size, remove: a.name });
     } else {
       b.className = "key orange"; b.textContent = "Install";
-      b.onclick = () => askInstall(a);
-      hoverPreview(b, { add: a.name, size: a.size || 0 });
+      b.onclick = () => askInstall(a, v);
+      hoverPreview(b, { add: a.name, size: variant.size });
     }
     b.disabled = !S.calc.connected || !!S.calc.error || S.busy;
     if (b.disabled) b.title = S.calc.connected ? "" : "Connect your calculator first";
     foot.appendChild(b);
     card.appendChild(foot);
-    v.appendChild(card);
+    view.appendChild(card);
   }
+}
+
+// size shown on a card: what the user picked, else what's installed, else the default
+// if it fits in the free space, else the smallest
+function pickVariant(a) {
+  if (chosen[a.id] && a.variants.some((x) => x.id === chosen[a.id])) return chosen[a.id];
+  if (a.installedVariant) return a.installedVariant;
+  const free = S.calc.connected && S.calc.total ? S.calc.total - S.calc.used : Infinity;
+  const def = a.variants.find((x) => x.id === a.defaultVariant) || a.variants[0];
+  if ((def.size || 0) <= free) return def.id;
+  return [...a.variants].sort((x, y) => (x.size || 0) - (y.size || 0))[0].id;
 }
 
 function renderDevice() {
@@ -161,7 +194,7 @@ function renderDevice() {
     row.appendChild(iconEl(a.icon || S.catalog.find((c) => c.name === a.name)?.icon, a.name));
     const known = S.catalog.some((c) => c.name === a.name);
     row.insertAdjacentHTML("beforeend", `<div class="grow"><h3>${esc(a.name)}</h3>
-      <div class="meta">${mb(a.size)}${known ? "" : " · not from Numstore"}</div></div>`);
+      <div class="meta">${[variantLabel(a), mb(a.size)].filter(Boolean).join(" · ")}${known ? "" : " · not from Numstore"}</div></div>`);
     const b = document.createElement("button");
     b.className = "key"; b.textContent = "Remove";
     b.disabled = S.busy;
@@ -170,6 +203,11 @@ function renderDevice() {
     row.appendChild(b);
     v.appendChild(row);
   }
+}
+
+function variantLabel(inst) {
+  const c = S.catalog.find((x) => x.name === inst.name);
+  return c && c.variants.length > 1 ? c.variants.find((x) => x.id === inst.variant)?.label : "";
 }
 
 function hoverPreview(el, p) {
@@ -213,10 +251,16 @@ function planHtml(plan, lead) {
   return h;
 }
 
-async function askInstall(a) {
-  const plan = await window.store.plan({ action: "install", id: a.id });
-  if (await modal(`Install ${a.name}`, planHtml(plan, `${esc(a.name)} will be added to your calculator.`), "Install"))
+async function askInstall(a, variant) {
+  const plan = await window.store.plan({ action: "install", id: a.id, variant });
+  const label = a.variants.find((x) => x.id === variant)?.label;
+  const multi = a.variants.length > 1;
+  if (a.installed) {
+    if (await modal(`${a.name}: ${label}`, planHtml(plan, `${esc(a.name)} will be replaced by its ${esc(label)} version.`), `Switch to ${label}`))
+      run(plan.target, `Switching ${a.name} to ${label}`);
+  } else if (await modal(`Install ${a.name}`, planHtml(plan, `${esc(a.name)}${multi ? ` (${esc(label)})` : ""} will be added to your calculator.`), "Install")) {
     run(plan.target, `Installing ${a.name}`);
+  }
 }
 
 async function askRemove(name) {
@@ -255,10 +299,29 @@ $("#add-file").addEventListener("click", async () => {
 document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !$("#modal").classList.contains("hidden")) $("#m-cancel").click(); });
 
 window.store.on("state", (s) => { S = s; render(); });
+window.store.on("update", (u) => {
+  const box = $("#update");
+  if (u.state === "available") { // macOS: download it from GitHub
+    $("#update-title").textContent = `Numstore ${u.version} is out.`;
+    $("#update-text").textContent = "Download it and replace the app in Applications.";
+    $("#update-btn").textContent = "Download";
+    box.classList.remove("hidden");
+    return;
+  }
+  if (u.state !== "ready") { box.classList.add("hidden"); return; }
+  $("#update-title").textContent = `Numstore ${u.version} is ready.`;
+  $("#update-text").textContent = "Restart to use it, or it installs next time you close Numstore.";
+  $("#update-btn").textContent = "Restart now";
+  box.classList.remove("hidden");
+});
+$("#update-btn").addEventListener("click", async () => {
+  if (!(await window.store.restartToUpdate())) toast("Wait until the calculator is done, then restart.", "bad");
+});
+window.store.version().then((v) => { $("#version").textContent = `Numstore ${v}`; });
 window.store.on("progress", (p) => { $("#b-text").textContent = p.detail ? `${p.text} ${p.detail}` : p.text; });
 window.store.on("done", (d) => {
   $("#busy").classList.add("hidden");
-  if (d.ok) toast(`${d.label.replace(/^Installing/, "Installed").replace(/^Removing/, "Removed")} . The calculator restarts: plug it back in to see the change.`, "ok");
+  if (d.ok) toast(`${d.label.replace(/^Installing/, "Installed").replace(/^Removing/, "Removed").replace(/^Switching/, "Switched")} . The calculator restarts: plug it back in to see the change.`, "ok");
   else toast(`${d.label} failed: ${d.error}`, "bad");
 });
 window.store.state().then((s) => { S = s; render(); });

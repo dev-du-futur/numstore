@@ -8,5 +8,7 @@ contextBridge.exposeInMainWorld("store", {
   addFile: () => ipcRenderer.invoke("add-file"),
   forget: (id) => ipcRenderer.invoke("forget", id),
   open: (url) => ipcRenderer.invoke("open", url),
+  restartToUpdate: () => ipcRenderer.invoke("restart-update"),
+  version: () => ipcRenderer.invoke("version"),
   on: (ch, fn) => ipcRenderer.on(ch, (_e, d) => fn(d)),
 });
