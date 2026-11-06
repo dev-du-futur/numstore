@@ -63,9 +63,11 @@ jobs:
             !Store/release/builder-debug.yml
           if-no-files-found: error
 
+  # publishes whatever built: GitHub's Mac machines are sometimes all busy for hours, and
+  # Windows users shouldn't wait for them (Mac users then keep the previous version)
   release:
     needs: build
-    if: startsWith(github.ref, 'refs/tags/')
+    if: ${{ !cancelled() && startsWith(github.ref, 'refs/tags/') }}
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -78,7 +80,10 @@ jobs:
       - name: Publish one release with every file
         run: |
           ls -la files
+          ls files/*.exe >/dev/null 2>&1 || { echo "::error::the Windows build is missing"; exit 1; }
+          mac="or the **.dmg** for Mac (arm64 = Apple Silicon, x64 = Intel). See the README for the first launch on Mac."
+          ls files/*.dmg >/dev/null 2>&1 || mac="(no Mac build this time: GitHub had no Mac machine free; Mac users keep the previous version)."
           # remove earlier attempts for this tag (keeps the tag itself)
           while gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; do gh release delete "$GITHUB_REF_NAME" --yes; done
           gh release create "$GITHUB_REF_NAME" files/* --title "Numstore ${GITHUB_REF_NAME#v}" \
-            --notes "Download **Numstore-Setup-${GITHUB_REF_NAME#v}.exe** for Windows, or the **.dmg** for Mac (arm64 = Apple Silicon, x64 = Intel). See the README for the first launch on Mac."
+            --notes "Download **Numstore-Setup-${GITHUB_REF_NAME#v}.exe** for Windows, $mac"
