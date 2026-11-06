@@ -39,5 +39,10 @@ for i in range(1, 7):
     w = 13 - (i // 3)
     slab(27 + (i % 2) * 0.5, 44 - i * 5, w, w, 5, colour(i * 4))
 slab(11, 3, 11, 11, 5, colour(28))   # sliding in
-img = img.resize((55, 56), Image.LANCZOS)
+img = img.resize((55, 56), Image.LANCZOS).convert("RGB")
+# rounded corners on white, like the calculator's own icons
+from PIL import ImageDraw
+mask = Image.new("L", (55 * 8, 56 * 8), 0)
+ImageDraw.Draw(mask).rounded_rectangle([0, 0, 55 * 8 - 1, 56 * 8 - 1], radius=56, fill=255)
+img = Image.composite(img, Image.new("RGB", (55, 56), (255, 255, 255)), mask.resize((55, 56), Image.LANCZOS))
 img.save(sys.argv[1] if len(sys.argv) > 1 else "src/icon.png")

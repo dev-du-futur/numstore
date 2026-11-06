@@ -1,5 +1,5 @@
 /* Infinite Stacker rules, after the original game.js / game-objects.js:
- * a block slides back and forth (x, then z, then x...) between -2 and 2 at 0.02 + 0.001 x (blocks) units per
+ * a block slides back and forth (x, then z, then x...) between -2 and 2 at 0.03 + 0.001 x (blocks) units per
  * frame of 60 Hz; dropping it keeps the part over the block below and cuts off the rest, which falls. A drop
  * within 5 % of the block below is perfect: it snaps into place with nothing cut. 5 perfects in a row turn on
  * golden mode (gold blocks that grow 5 % on each perfect, up to 2 x 2) for 5 more perfects or until a miss.
@@ -62,7 +62,7 @@ static void spawn(void) {
   G.ax = G.adir == 0 ? -2 : prev->x;
   G.az = G.adir == 1 ? -2 : prev->z;
   block_colour(G.n, G.golden, G.acol);
-  G.aspeed = 0.02f + G.n * 0.001f;
+  G.aspeed = 0.03f + G.n * 0.001f; /* the original starts at 0.02: too slow on the calculator */
   G.aspawn = G.now;
   G.active = true;
 }
