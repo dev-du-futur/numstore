@@ -7,43 +7,37 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <header class="top">
-    <div class="brand">
-      <img src="logo.png" alt="" class="logo">
-      <div>
-        <h1>Numstore</h1>
-        <p class="tag">Apps for your NumWorks</p>
-      </div>
-    </div>
-    <div class="search">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
-      <input id="q" type="search" placeholder="Search apps" autocomplete="off">
-    </div>
-    <div id="calc" class="calc off">
-      <span class="dot"></span>
-      <div>
-        <strong id="calc-title">No calculator</strong>
-        <span id="calc-sub">Plug it in with a USB cable</span>
-      </div>
-    </div>
+  <!-- like the calculator's own title bar: state on the left, title in the middle, storage on the right -->
+  <header class="titlebar">
+    <span id="calc-title" class="tb-left">NO CALCULATOR</span>
+    <span class="tb-title">NUMSTORE</span>
+    <span class="tb-right"><span id="tb-free"></span><span class="battery"><span id="tb-batt"></span></span></span>
   </header>
+
+  <div id="notice" class="notice hidden">
+    <strong id="notice-title"></strong>
+    <span id="calc-sub"></span>
+  </div>
 
   <section class="storage" id="storage">
     <div class="storage-head">
-      <h2>Calculator storage</h2>
+      <h2>Storage</h2>
       <span id="storage-text">Connect your calculator to see its storage</span>
     </div>
-    <div class="bar" id="bar"><div class="bar-empty"></div></div>
+    <div class="bar" id="bar"></div>
     <div class="legend" id="legend"></div>
   </section>
 
-  <nav class="tabs" role="tablist">
-    <button class="tab active" data-tab="store" role="tab">Store <span class="count" id="n-store"></span></button>
-    <button class="tab" data-tab="device" role="tab">On my calculator <span class="count" id="n-device"></span></button>
-    <div class="spacer"></div>
-    <button class="ghost" id="add-file" title="Install a .nwa file from your computer">
-      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg> Add a .nwa file
-    </button>
+  <nav class="toolbar">
+    <div class="tabs" role="tablist">
+      <button class="key tab active" data-tab="store" role="tab">Store<span class="count" id="n-store"></span></button>
+      <button class="key tab" data-tab="device" role="tab">On my calculator<span class="count" id="n-device"></span></button>
+    </div>
+    <div class="search">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input id="q" type="search" placeholder="Search" autocomplete="off">
+    </div>
+    <button class="key" id="add-file" title="Install a .nwa file from your computer">Add a .nwa file</button>
   </nav>
 
   <main>
@@ -54,22 +48,25 @@
 
   <div id="modal" class="modal hidden" role="dialog" aria-modal="true">
     <div class="sheet">
-      <h3 id="m-title"></h3>
-      <div id="m-body"></div>
-      <div class="actions">
-        <button class="ghost" id="m-cancel">Cancel</button>
-        <button class="primary" id="m-ok">OK</button>
+      <div class="sheet-bar" id="m-title"></div>
+      <div class="sheet-body">
+        <div id="m-body"></div>
+        <div class="actions">
+          <button class="key" id="m-cancel">Cancel</button>
+          <button class="key orange" id="m-ok">OK</button>
+        </div>
       </div>
     </div>
   </div>
 
   <div id="busy" class="modal hidden">
-    <div class="sheet center">
-      <div class="spinner"></div>
-      <h3 id="b-title">Installing…</h3>
-      <p id="b-text">Preparing…</p>
-      <div class="progress"><div></div></div>
-      <p class="warn">Keep the calculator plugged in and turned on.</p>
+    <div class="sheet">
+      <div class="sheet-bar" id="b-title">INSTALLING</div>
+      <div class="sheet-body">
+        <p id="b-text">Preparing…</p>
+        <div class="progress"><div></div></div>
+        <p class="hint">Keep the calculator plugged in and turned on.</p>
+      </div>
     </div>
   </div>
 
