@@ -1,0 +1,5 @@
+output/
+host/out/
+host/circletap_test*
+*.exe
+circle_tap_challenge_by_api.zip

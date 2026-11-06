@@ -116,6 +116,14 @@ function renderStore() {
     card.insertAdjacentHTML("beforeend", `<div class="name">${esc(a.name)}</div>
       <div class="meta">${esc([a.category, a.author, a.version && "v" + a.version].filter(Boolean).join(" · "))}</div>
       <p class="desc">${esc(a.description)}</p>`);
+    if (a.credit) card.insertAdjacentHTML("beforeend", `<div class="meta">${esc(a.credit)}</div>`);
+    if (a.homepage) { // apps from other projects: where their source and licence are
+      const l = document.createElement("button");
+      l.className = "link";
+      l.textContent = `Source${a.license ? " · " + a.license : ""}`;
+      l.onclick = () => window.store.open(a.homepage);
+      card.appendChild(l);
+    }
     const v = pickVariant(a);
     const variant = a.variants.find((x) => x.id === v);
     if (a.variants.length > 1) {

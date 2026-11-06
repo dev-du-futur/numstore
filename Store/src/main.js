@@ -46,6 +46,7 @@ function state() {
       return {
         id: a.id, name: a.name, version: a.version, author: a.author, description: a.description,
         category: a.category, source: a.source,
+        license: a.license || "", homepage: a.homepage || "", credit: a.credit || "",
         icon: a.iconPath ? iconData(a.iconPath) : a.iconUrl || null,
         variants: a.variants.map((v) => ({ id: v.id, label: v.label, description: v.description, size: v.size, ready: v.ready })),
         defaultVariant: a.defaultVariant || a.variants[0].id,

@@ -1,0 +1,10 @@
+{
+  "id": "infinite-stacker",
+  "name": "Infinite Stacker",
+  "version": "1.0.0",
+  "author": "dev-du-futur",
+  "category": "Games",
+  "description": "Stack sliding blocks as high as you can: press OK to drop each one, and whatever hangs over the edge is cut off. Five perfect drops in a row start golden mode, where perfect blocks grow back.",
+  "nwa": "dist/infinite-stacker.nwa",
+  "icon": "src/icon.png"
+}

@@ -1,10 +1,50 @@
 {
   "apps": [
     {
+      "id": "circletap",
+      "name": "Circle Tap",
+      "version": "1.0.0",
+      "author": "dev-du-futur",
+      "category": "Games",
+      "description": "Press OK just as the spinning cursor crosses the coloured arc. Every hit speeds it up and flips its direction. Easy, Medium and Hard, a Zen mode and six shaped maps.",
+      "defaultVariant": "default",
+      "nwa": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/Circletap/dist/circletap.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/Circletap/src/icon.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 131072,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "infinite-stacker",
+      "name": "Infinite Stacker",
+      "version": "1.0.0",
+      "author": "dev-du-futur",
+      "category": "Games",
+      "description": "Stack sliding blocks as high as you can: press OK to drop each one, and whatever hangs over the edge is cut off. Five perfect drops in a row start golden mode, where perfect blocks grow back.",
+      "defaultVariant": "default",
+      "nwa": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/Infinite%20Stacker/dist/infinite-stacker.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/Infinite%20Stacker/src/icon.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 131072,
+          "data": null
+        }
+      ]
+    },
+    {
       "id": "inkwave",
       "name": "Inkwave",
       "version": "0.1.0",
-      "author": "Awe, after Inkwave by Jayden Davis",
+      "author": "dev-du-futur, after Inkwave by Jayden Davis",
       "category": "Games",
       "description": "Turf War in blocky 3D: you and 3 bots against 4 bots for 3 minutes on Tidewater Plaza. Ink the ground, swim through your ink as a squid, splat the other team. Spritzer, Swell Roller or Glint Charger, plus bombs. Based on Inkwave (MIT).",
       "defaultVariant": "default",
@@ -24,7 +64,7 @@
       "id": "tinychat",
       "name": "TinyChat",
       "version": "1.3.0",
-      "author": "Awe",
+      "author": "dev-du-futur",
       "category": "AI",
       "description": "A small chatbot that runs on the calculator itself, with no connection. Ask it questions, chat, or get jokes. Maths, primes and unit conversions are calculated exactly.",
       "defaultVariant": "full",
@@ -44,6 +84,397 @@
           "description": "3.7M-parameter model. Better answers, takes most of the space.",
           "size": 2293760,
           "data": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/Tinychat/models/tinychat-4m-4bit.bin"
+        }
+      ]
+    },
+    {
+      "id": "numplay-2048",
+      "name": "2048",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Games",
+      "description": "Slide the tiles, merge equal numbers, reach 2048. After Gabriele Cirulli's game.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/2048.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/numplay-2048.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 65536,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-snake",
+      "name": "Snake",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Games",
+      "description": "The classic: eat, grow, don't bite yourself.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/Snake.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/numplay-snake.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 65536,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-minesweeper",
+      "name": "Minesweeper",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Games",
+      "description": "Clear the field without stepping on a mine.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/Minesweeper.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/numplay-minesweeper.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 65536,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-solitaire",
+      "name": "Solitaire",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Games",
+      "description": "Klondike patience with the keypad.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/Solitaire.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/numplay-solitaire.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 65536,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-sudoku",
+      "name": "Sudoku",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Games",
+      "description": "Number place puzzles, made on the calculator.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/Sudoku.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/numplay-sudoku.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 65536,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-connectfour",
+      "name": "Connect Four",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Games",
+      "description": "Line up four discs before the other player.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/ConnectFour.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/numplay-connectfour.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 65536,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-ultimatetictactoe",
+      "name": "Ultimate Tic-Tac-Toe",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Games",
+      "description": "Tic-tac-toe made of tic-tac-toes: where you play decides where the other plays next.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/UltimateTicTacToe.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/numplay-ultimatetictactoe.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 65536,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-numchess",
+      "name": "NumChess",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Games",
+      "description": "Chess on the calculator.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/NumChess.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/numplay-numchess.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 65536,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-mahjong",
+      "name": "Mahjong",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Games",
+      "description": "Mahjong solitaire: match free tiles to clear KMahjongg's layouts.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/Mahjong.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/numplay-mahjong.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 65536,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-sokoban",
+      "name": "Sokoban",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Games",
+      "description": "Push every box onto its spot. David W. Skinner's Microban levels.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "Levels: Microban by David W. Skinner.",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/Sokoban.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/numplay-sokoban.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 65536,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-blockbreaker",
+      "name": "Block Breaker",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Games",
+      "description": "Bounce the ball and break every brick.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/BlockBreaker.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/numplay-blockbreaker.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 65536,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-towerblocks",
+      "name": "Tower Blocks",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Games",
+      "description": "Stack sliding blocks as high as you can. Ported from Steve Gardner's Tower Blocks (MIT).",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "Tower Blocks by Steve Gardner (MIT).",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/TowerBlocks.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/numplay-towerblocks.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 65536,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-coreball",
+      "name": "Core Ball",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Games",
+      "description": "Shoot pins into the spinning core without touching the others. 60 levels, from Random's Core Ball (MIT).",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "Core Ball by Random / Yang Hao (MIT).",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/CoreBall.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/numplay-coreball.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 65536,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-chromedino",
+      "name": "Chrome Dino",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Games",
+      "description": "Chrome's offline dinosaur runner, ported from Chromium's source (BSD).",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "Ported by LilyTheCatgirl from Chromium (BSD).",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/ChromeDino.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/numplay-chromedino.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 65536,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-twoplayers",
+      "name": "2 Players",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Games",
+      "description": "Pong, air hockey, maze tanks and light cycles for two on one keypad.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/TwoPlayers.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/numplay-twoplayers.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 65536,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-imposter",
+      "name": "Imposter",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Games",
+      "description": "Party game: pass the calculator, find who doesn't know the secret word.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/Imposter.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/numplay-imposter.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 65536,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-numpowder",
+      "name": "NumPowder",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Games",
+      "description": "A falling-sand sandbox after The Powder Toy (GPL-3.0): powders, liquids, fire and more.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "Materials, font and icons from The Powder Toy (GPL-3.0).",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/NumPowder.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/numplay-numpowder.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 458752,
+          "data": null
         }
       ]
     }

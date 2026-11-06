@@ -1,0 +1,5 @@
+output/
+host/out/
+host/stacker_test*
+*.exe
+infinite_stacker_by_api.zip

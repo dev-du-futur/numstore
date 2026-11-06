@@ -1,0 +1,26 @@
+{
+  "_about": "Games from NumPlay (github.com/Mason363/NumPlay, GPL-3.0) listed in Numstore. Only games written for NumPlay with their own art or openly licensed sources. The store downloads each .nwa straight from NumPlay's release; nothing is copied into this repo except the icons, read out of the .nwa files.",
+  "repo": "Mason363/NumPlay",
+  "tag": "v1.24.15",
+  "author": "Mason363 (NumPlay)",
+  "license": "GPL-3.0",
+  "games": [
+    { "file": "2048.nwa", "name": "2048", "description": "Slide the tiles, merge equal numbers, reach 2048. After Gabriele Cirulli's game." },
+    { "file": "Snake.nwa", "name": "Snake", "description": "The classic: eat, grow, don't bite yourself." },
+    { "file": "Minesweeper.nwa", "name": "Minesweeper", "description": "Clear the field without stepping on a mine." },
+    { "file": "Solitaire.nwa", "name": "Solitaire", "description": "Klondike patience with the keypad." },
+    { "file": "Sudoku.nwa", "name": "Sudoku", "description": "Number place puzzles, made on the calculator." },
+    { "file": "ConnectFour.nwa", "name": "Connect Four", "description": "Line up four discs before the other player." },
+    { "file": "UltimateTicTacToe.nwa", "name": "Ultimate Tic-Tac-Toe", "description": "Tic-tac-toe made of tic-tac-toes: where you play decides where the other plays next." },
+    { "file": "NumChess.nwa", "name": "NumChess", "description": "Chess on the calculator." },
+    { "file": "Mahjong.nwa", "name": "Mahjong", "description": "Mahjong solitaire: match free tiles to clear KMahjongg's layouts." },
+    { "file": "Sokoban.nwa", "name": "Sokoban", "description": "Push every box onto its spot. David W. Skinner's Microban levels.", "credit": "Levels: Microban by David W. Skinner." },
+    { "file": "BlockBreaker.nwa", "name": "Block Breaker", "description": "Bounce the ball and break every brick." },
+    { "file": "TowerBlocks.nwa", "name": "Tower Blocks", "description": "Stack sliding blocks as high as you can. Ported from Steve Gardner's Tower Blocks (MIT).", "credit": "Tower Blocks by Steve Gardner (MIT)." },
+    { "file": "CoreBall.nwa", "name": "Core Ball", "description": "Shoot pins into the spinning core without touching the others. 60 levels, from Random's Core Ball (MIT).", "credit": "Core Ball by Random / Yang Hao (MIT)." },
+    { "file": "ChromeDino.nwa", "name": "Chrome Dino", "description": "Chrome's offline dinosaur runner, ported from Chromium's source (BSD).", "credit": "Ported by LilyTheCatgirl from Chromium (BSD)." },
+    { "file": "TwoPlayers.nwa", "name": "2 Players", "description": "Pong, air hockey, maze tanks and light cycles for two on one keypad." },
+    { "file": "Imposter.nwa", "name": "Imposter", "description": "Party game: pass the calculator, find who doesn't know the secret word." },
+    { "file": "NumPowder.nwa", "name": "NumPowder", "description": "A falling-sand sandbox after The Powder Toy (GPL-3.0): powders, liquids, fire and more.", "credit": "Materials, font and icons from The Powder Toy (GPL-3.0)." }
+  ]
+}

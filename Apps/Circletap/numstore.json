@@ -1,0 +1,10 @@
+{
+  "id": "circletap",
+  "name": "Circle Tap",
+  "version": "1.0.0",
+  "author": "dev-du-futur",
+  "category": "Games",
+  "description": "Press OK just as the spinning cursor crosses the coloured arc. Every hit speeds it up and flips its direction. Easy, Medium and Hard, a Zen mode and six shaped maps.",
+  "nwa": "dist/circletap.nwa",
+  "icon": "src/icon.png"
+}

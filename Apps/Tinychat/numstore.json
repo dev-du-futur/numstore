@@ -2,7 +2,7 @@
   "id": "tinychat",
   "name": "TinyChat",
   "version": "1.3.0",
-  "author": "Awe",
+  "author": "dev-du-futur",
   "category": "AI",
   "description": "A small chatbot that runs on the calculator itself, with no connection. Ask it questions, chat, or get jokes. Maths, primes and unit conversions are calculated exactly.",
   "nwa": "dist/tinychat.nwa",
