@@ -92,11 +92,12 @@
       ],
       "icon": "build/icon.png",
       "category": "public.app-category.utilities",
-      "identity": "-",
+      "identity": null,
       "artifactName": "Numstore-${version}-mac-${arch}.${ext}"
     },
     "dmg": {
       "title": "Numstore ${version}"
-    }
+    },
+    "afterPack": "scripts/after-pack.js"
   }
 }

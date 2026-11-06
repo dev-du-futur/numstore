@@ -1,8 +1,8 @@
-# Builds Numstore for Windows and macOS on GitHub's machines and publishes them as a
-# GitHub release (the store's auto-update reads these releases).
+# Builds Numstore for Windows and macOS on GitHub's machines. On a tag, a last job
+# publishes everything as one GitHub release (the store's auto-update reads it).
 # Start it by pushing a tag that matches Store/package.json's version, e.g.:
 #   git tag v0.2.0 && git push origin v0.2.0
-# or by hand from the Actions tab ("Run workflow"), which builds without publishing.
+# or by hand from the Actions tab ("Run workflow"): builds only, files kept on the run.
 name: Release Numstore
 
 on:
@@ -27,6 +27,7 @@ jobs:
     defaults:
       run:
         working-directory: Store
+        shell: bash
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -37,19 +38,19 @@ jobs:
       - run: npm ci
       - name: Check the tag matches the version
         if: startsWith(github.ref, 'refs/tags/')
-        shell: bash
         run: |
           v=$(node -p "require('./package.json').version")
-          [ "v$v" = "${GITHUB_REF_NAME}" ] || { echo "tag ${GITHUB_REF_NAME} but package.json says $v"; exit 1; }
+          [ "v$v" = "${GITHUB_REF_NAME}" ] || { echo "::error::tag ${GITHUB_REF_NAME} but package.json says $v"; exit 1; }
       - name: Pack the built-in apps
         run: node scripts/build-catalog.js
-      - name: Build (and publish on a tag)
-        shell: bash
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build
         run: |
-          if [ "${GITHUB_REF_TYPE}" = "tag" ]; then pub=always; else pub=never; fi
-          npx electron-builder ${{ matrix.target }} --publish $pub
+          set -o pipefail
+          npx electron-builder ${{ matrix.target }} --publish never 2>&1 | tee build.log || {
+            # logs need a sign-in on github.com; annotations don't
+            tail -n 25 build.log | sed 's/%/%25/g' | while IFS= read -r l; do echo "::error::$l"; done
+            exit 1
+          }
       - uses: actions/upload-artifact@v4
         with:
           name: numstore-${{ matrix.os }}
@@ -59,4 +60,25 @@ jobs:
             Store/release/*.zip
             Store/release/*.yml
             Store/release/*.blockmap
-          if-no-files-found: ignore
+            !Store/release/builder-debug.yml
+          if-no-files-found: error
+
+  release:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: files
+          merge-multiple: true
+      - name: Publish one release with every file
+        run: |
+          ls -la files
+          # remove earlier attempts for this tag (keeps the tag itself)
+          while gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1; do gh release delete "$GITHUB_REF_NAME" --yes; done
+          gh release create "$GITHUB_REF_NAME" files/* --title "Numstore ${GITHUB_REF_NAME#v}" \
+            --notes "Download **Numstore-Setup-${GITHUB_REF_NAME#v}.exe** for Windows, or the **.dmg** for Mac (arm64 = Apple Silicon, x64 = Intel). See the README for the first launch on Mac."
