@@ -119,7 +119,15 @@ async function install(apps, onStep) {
   onStep && onStep("Writing to the calculator…");
   const args = ["install-nwa", ...apps.map((a) => a.nwa)];
   if (apps.some((a) => a.data)) args.push("--external-data", apps.map((a) => a.data || "").join(","));
-  return run(js, args, (line) => onStep && /\d+%|ETA|\|/.test(line) && onStep("Writing to the calculator…", line));
+  const onLine = (line) => onStep && /\d+%|ETA|\|/.test(line) && onStep("Writing to the calculator…", line);
+  try {
+    return await run(js, args, onLine);
+  } catch (e) {
+    // right after a scan or a replug the calculator can be briefly unavailable: try once more
+    if (!/no devices found|selection failure/i.test(e.message)) throw e;
+    await new Promise((r) => setTimeout(r, 2500));
+    return run(js, args, onLine);
+  }
 }
 
 // size an app takes once installed (linked, padded to 64 KB), via nwlink nwa-bin

@@ -64,8 +64,12 @@ class Calculator {
     return this;
   }
 
-  close() {
-    try { this.dev.interfaces[0].release(() => {}); } catch (e) {}
+  // release fully before closing: Windows gives the calculator to one program at a time,
+  // and nwlink (another process) can't see it while we still hold it
+  async close() {
+    await new Promise((res) => {
+      try { this.dev.interfaces[0].release(true, () => res()); } catch (e) { res(); }
+    });
     try { this.dev.close(); } catch (e) {}
   }
 
@@ -214,7 +218,7 @@ async function scan() {
       appsEnd: info.appsEnd,
     };
   } finally {
-    c.close();
+    await c.close();
   }
 }
 
@@ -245,7 +249,7 @@ async function removeAll() {
     await ctrl(c.dev, false, DFU_DNLOAD, 0, c.ifaceNum, Buffer.alloc(0));
     try { await c.status(); } catch (e) { /* the calculator resets here */ }
   } finally {
-    c.close();
+    await c.close();
   }
 }
 
