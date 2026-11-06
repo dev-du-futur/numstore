@@ -1,0 +1,5 @@
+output/
+host/out/
+host/inkwave_test*
+*.exe
+Sources/

@@ -1,6 +1,26 @@
 {
   "apps": [
     {
+      "id": "inkwave",
+      "name": "Inkwave",
+      "version": "0.1.0",
+      "author": "Awe, after Inkwave by Jayden Davis",
+      "category": "Games",
+      "description": "Turf War in blocky 3D: you and 3 bots against 4 bots for 3 minutes on Tidewater Plaza. Ink the ground, swim through your ink as a squid, splat the other team. Spritzer, Swell Roller or Glint Charger, plus bombs. Based on Inkwave (MIT).",
+      "defaultVariant": "default",
+      "nwa": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/Inkwave/dist/inkwave.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/Inkwave/src/icon.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 131072,
+          "data": null
+        }
+      ]
+    },
+    {
       "id": "tinychat",
       "name": "TinyChat",
       "version": "1.2.0",

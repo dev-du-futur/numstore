@@ -35,6 +35,7 @@ Good to know:
 | App | What it does |
 |---|---|
 | [TinyChat](Apps/Tinychat) | A small chatbot that runs on the calculator itself, without a connection, with built-in maths and unit helpers |
+| [Inkwave](Apps/Inkwave) | Turf War in blocky 3D against bots: ink the ground, swim through your ink, splat the other team. Based on [Inkwave](https://github.com/jaydendavisnc/inkwave) (MIT) |
 
 ### Adding an app to the store
 
