@@ -1,0 +1,16 @@
+{
+  "apps": [
+    {
+      "id": "tinychat",
+      "name": "TinyChat",
+      "version": "1.1.0",
+      "author": "Awe",
+      "category": "AI",
+      "description": "A small chatbot that runs on the calculator itself, with no connection. Ask it questions, chat, or get jokes. Maths, primes and unit conversions are calculated exactly.",
+      "size": 2293760,
+      "nwa": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/Tinychat/dist/tinychat.nwa",
+      "data": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/Tinychat/models/tinychat-4m-4bit.bin",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/Tinychat/chat/src/icon.png"
+    }
+  ]
+}

@@ -1,0 +1,66 @@
+{
+  "name": "numstore",
+  "productName": "Numstore",
+  "version": "0.1.0",
+  "description": "Install and remove apps on your NumWorks calculator",
+  "main": "src/main.js",
+  "author": "Awe",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "catalog": "node scripts/build-catalog.js",
+    "icon": "python scripts/make_icon.py",
+    "dist": "node scripts/build-catalog.js && electron-builder --win"
+  },
+  "dependencies": {
+    "cli-progress": "^3.11.2",
+    "commander": "^9.3.0",
+    "tar-stream": "^3.2.2",
+    "usb": "2.4.3"
+  },
+  "devDependencies": {
+    "electron": "^37.10.3",
+    "electron-builder": "^26.18.0"
+  },
+  "build": {
+    "appId": "com.devdufutur.numstore",
+    "productName": "Numstore",
+    "copyright": "Awe",
+    "asar": false,
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "src/**",
+      "package.json",
+      "!src/**/*.map"
+    ],
+    "extraResources": [
+      {
+        "from": "catalog",
+        "to": "catalog"
+      }
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.ico",
+      "artifactName": "Numstore-Setup-${version}.exe"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "shortcutName": "Numstore"
+    }
+  }
+}
