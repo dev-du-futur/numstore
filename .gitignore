@@ -1,0 +1,10 @@
+# everything that isn't the app or its training code stays local
+/data/
+/app/
+/probe/
+/reports/
+/research_notes/
+chat/output/
+chat/model.bin
+*.exe
+__pycache__/
