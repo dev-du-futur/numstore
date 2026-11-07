@@ -21,6 +21,15 @@
     { "file": "ChromeDino.nwa", "name": "Chrome Dino", "description": "Chrome's offline dinosaur runner, ported from Chromium's source (BSD).", "credit": "Ported by LilyTheCatgirl from Chromium (BSD)." },
     { "file": "TwoPlayers.nwa", "name": "2 Players", "description": "Pong, air hockey, maze tanks and light cycles for two on one keypad." },
     { "file": "Imposter.nwa", "name": "Imposter", "description": "Party game: pass the calculator, find who doesn't know the secret word." },
+    { "file": "BlockBlast.nwa", "name": "Block Blast", "description": "Drop block shapes on the grid and clear full rows and columns. Inspired by Hungry Studio's Block Blast!, written fresh.", "credit": "Not affiliated with Hungry Studio." },
+    { "file": "SuikaGame.nwa", "name": "Suika Game", "description": "Drop fruit, merge two of a kind into a bigger one, and don't overflow the jar. Inspired by Aladdin X's Suika Game.", "credit": "Brought to NumPlay by Bobydeluxe. Not affiliated with Aladdin X." },
+    { "file": "FlappyDunk.nwa", "name": "Flappy Dunk", "description": "Flap a winged basketball through hoop after hoop. Inspired by Voodoo's Flappy Dunk.", "credit": "Brought to NumPlay by Bobydeluxe. Not affiliated with Voodoo." },
+    { "file": "DoodleJump.nwa", "name": "Doodle Jump", "description": "Bounce up from platform to platform as high as you can. Inspired by Lima Sky's Doodle Jump, drawn fresh.", "credit": "Brought to NumPlay by Bobydeluxe. Not affiliated with Lima Sky." },
+    { "file": "UNO.nwa", "name": "UNO", "description": "The card game by its official rules, against the calculator, with cards drawn for the screen.", "credit": "Brought to NumPlay by Bobydeluxe. Not affiliated with Mattel." },
+    { "file": "Famidash.nwa", "name": "Famidash", "description": "TFDSoft's NES take on Geometry Dash (MIT), turned into C: 173 levels of jumping to the beat.", "credit": "Famidash by TFDSoft (MIT). Not affiliated with RobTop Games." },
+    { "file": "NumDrive.nwa", "name": "NumDrive", "description": "A Drive Mad style physics driving game: 157 levels of cars, bridges and water.", "credit": "Inspired by Drive Mad; not affiliated with its makers." },
+    { "file": "NumPico.nwa", "name": "NumPico", "description": "A PICO-8 player for the calculator; add your own carts with NumPlay Studio.", "credit": "femto8 by Ben Baker (MIT), z8lua by Sam Hocevar." },
+    { "file": "NumVisuals.nwa", "name": "NumVisuals", "description": "Moving backgrounds (aurora, plasma, warp, code rain…) with a clock, stopwatch, timer, counter or your own words on top." },
     { "file": "NumPowder.nwa", "name": "NumPowder", "description": "A falling-sand sandbox after The Powder Toy (GPL-3.0): powders, liquids, fire and more.", "credit": "Materials, font and icons from The Powder Toy (GPL-3.0)." }
   ]
 }

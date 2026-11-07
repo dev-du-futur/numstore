@@ -456,6 +456,213 @@
       ]
     },
     {
+      "id": "numplay-blockblast",
+      "name": "Block Blast",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Games",
+      "description": "Drop block shapes on the grid and clear full rows and columns. Inspired by Hungry Studio's Block Blast!, written fresh.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "Not affiliated with Hungry Studio.",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/BlockBlast.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/numplay-blockblast.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 65536,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-suikagame",
+      "name": "Suika Game",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Games",
+      "description": "Drop fruit, merge two of a kind into a bigger one, and don't overflow the jar. Inspired by Aladdin X's Suika Game.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "Brought to NumPlay by Bobydeluxe. Not affiliated with Aladdin X.",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/SuikaGame.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/numplay-suikagame.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 65536,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-flappydunk",
+      "name": "Flappy Dunk",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Games",
+      "description": "Flap a winged basketball through hoop after hoop. Inspired by Voodoo's Flappy Dunk.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "Brought to NumPlay by Bobydeluxe. Not affiliated with Voodoo.",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/FlappyDunk.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/numplay-flappydunk.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 65536,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-doodlejump",
+      "name": "Doodle Jump",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Games",
+      "description": "Bounce up from platform to platform as high as you can. Inspired by Lima Sky's Doodle Jump, drawn fresh.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "Brought to NumPlay by Bobydeluxe. Not affiliated with Lima Sky.",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/DoodleJump.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/numplay-doodlejump.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 65536,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-uno",
+      "name": "UNO",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Games",
+      "description": "The card game by its official rules, against the calculator, with cards drawn for the screen.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "Brought to NumPlay by Bobydeluxe. Not affiliated with Mattel.",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/UNO.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/numplay-uno.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 65536,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-famidash",
+      "name": "Famidash",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Games",
+      "description": "TFDSoft's NES take on Geometry Dash (MIT), turned into C: 173 levels of jumping to the beat.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "Famidash by TFDSoft (MIT). Not affiliated with RobTop Games.",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/Famidash.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/numplay-famidash.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 1638400,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-numdrive",
+      "name": "NumDrive",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Games",
+      "description": "A Drive Mad style physics driving game: 157 levels of cars, bridges and water.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "Inspired by Drive Mad; not affiliated with its makers.",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/NumDrive.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/numplay-numdrive.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 262144,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-numpico",
+      "name": "NumPico",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Games",
+      "description": "A PICO-8 player for the calculator; add your own carts with NumPlay Studio.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "femto8 by Ben Baker (MIT), z8lua by Sam Hocevar.",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/NumPico.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/numplay-numpico.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 196608,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-numvisuals",
+      "name": "NumVisuals",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Games",
+      "description": "Moving backgrounds (aurora, plasma, warp, code rain…) with a clock, stopwatch, timer, counter or your own words on top.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/NumVisuals.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/numplay-numvisuals.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 65536,
+          "data": null
+        }
+      ]
+    },
+    {
       "id": "numplay-numpowder",
       "name": "NumPowder",
       "version": "1.24.15",
