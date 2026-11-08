@@ -65,7 +65,12 @@ async function linkedGames(online) {
     const id = "numplay-" + g.file.replace(/\.nwa$/, "").toLowerCase();
     const url = `https://github.com/${m.repo}/releases/download/${m.tag}/${g.file}`;
     const file = path.join(cache, g.file);
-    if (!fs.existsSync(file)) fs.writeFileSync(file, await download(url));
+    if (!fs.existsSync(file)) {
+      const buf = await download(url);
+      // GitHub sometimes answers with an HTML error page: only keep real apps (ELF files)
+      if (buf.readUInt32BE(0) !== 0x7f454c46) throw new Error(`${url}: not a NumWorks app (GitHub error page?)`);
+      fs.writeFileSync(file, buf);
+    }
     const size = await installer.measure(file, null, os.tmpdir());
     const icon = elfSection(fs.readFileSync(file), ".rodata.eadk_app_icon");
     const img = icon && nwi.decode(icon);

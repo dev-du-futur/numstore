@@ -663,6 +663,29 @@
       ]
     },
     {
+      "id": "numplay-doom",
+      "name": "Doom",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Games",
+      "description": "The 1993 classic on its own engine: the shareware episode Knee-Deep in the Dead, all 9 levels. Big: about 2 MB on the calculator.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "RP2040 Doom by Graham Sanderson, from Chocolate Doom and id Software's GPL source (GPL-2.0); shareware DOOM1.WAD by id Software. Not affiliated with id Software, ZeniMax or Bethesda.",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/Doom.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/numplay-doom.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 1769472,
+          "data": null
+        }
+      ]
+    },
+    {
       "id": "numplay-numpowder",
       "name": "NumPowder",
       "version": "1.24.15",
