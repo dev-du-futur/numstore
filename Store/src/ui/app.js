@@ -63,6 +63,7 @@ function renderStorage() {
     return;
   }
   $("#storage").classList.remove("hidden");
+  if (preview?.add && c.extend?.on) return renderExtendedPreview(c, bar, legend, text);
   let used = 0;
   for (const a of S.installed) {
     const seg = document.createElement("div");
@@ -93,6 +94,43 @@ function renderStorage() {
         : `After this: <b>${mb(c.total - after)}</b> free of ${mb(c.total)}`)
     : `<b>${mb(free)}</b> free of ${mb(c.total)}`;
   legend.insertAdjacentHTML("beforeend", `<span><i style="background:#e4e5e8"></i>Free · ${mb(free)}</span>`);
+}
+
+// With extended memory, show the apps as they would be laid out (biggest last, like
+// main.js extendOrder): an app that would start after the line is red, since the
+// calculator wouldn't find it.
+function renderExtendedPreview(c, bar, legend, text) {
+  const normal = c.extend.normal;
+  let list = S.installed.map((a) => ({ name: a.name, size: a.size }));
+  const at = list.findIndex((a) => a.name === preview.add);
+  if (at >= 0) list[at] = { name: preview.add, size: preview.size, isNew: true };
+  else list.push({ name: preview.add, size: preview.size, isNew: true });
+  if (list.length > 1) {
+    let big = 0;
+    list.forEach((a, i) => { if (a.size > list[big].size) big = i; });
+    list = [...list.slice(0, big), ...list.slice(big + 1), list[big]];
+  }
+  let start = 0;
+  const lost = [];
+  for (const a of list) {
+    const seg = document.createElement("div");
+    const late = start >= normal;
+    if (late) lost.push(a.name);
+    seg.className = "seg" + (a.isNew ? " preview" : "") + (late ? " lost" : "");
+    seg.style.width = Math.max(0, Math.min(100 - 100 * start / c.total, 100 * a.size / c.total)) + "%";
+    seg.style.background = colorFor(a.name);
+    seg.title = `${a.name} · ${mb(a.size)}${late ? " · would start after the line: the calculator wouldn't find it" : ""}`;
+    bar.appendChild(seg);
+    start += a.size;
+    legend.insertAdjacentHTML("beforeend", `<span><i style="background:${late ? "var(--red)" : colorFor(a.name)}"></i>${esc(a.name)} · ${mb(a.size)}</span>`);
+  }
+  renderExtend(c, bar);
+  text.innerHTML = start > c.total
+    ? `<b style="color:var(--red)">Doesn't fit</b>: needs ${mb(start - c.total)} more`
+    : lost.length
+      ? `<b style="color:var(--red)">Doesn't fit</b>: ${esc(lost.join(", "))} would start after the line`
+      : `After this: <b>${mb(c.total - start)}</b> free of ${mb(c.total)}`;
+  legend.insertAdjacentHTML("beforeend", `<span><i style="background:#e4e5e8"></i>Free · ${mb(Math.max(0, c.total - start))}</span>`);
 }
 
 // ---- extend memory (experimental: apps may use the calculator's spare system copy) ----
@@ -313,25 +351,56 @@ function modal(title, html, okText, danger, wide) {
     const close = (v) => { $("#modal").classList.add("hidden"); ok.onclick = null; $("#m-cancel").onclick = null; res(v); };
     ok.onclick = () => close(true);
     $("#m-cancel").onclick = () => close(false);
-    ok.disabled = !!$("#m-body .space.bad");
+    ok.disabled = !!$("#m-body .space.bad, #m-body .problem") && !$("#m-body .fix");
     // a dialog with an "I understand" box: OK only once it's ticked
     const agree = $("#m-agree");
     if (agree) { ok.disabled = true; agree.onchange = () => { ok.disabled = !agree.checked; }; }
   });
 }
 
+// why the apps can't be laid out with extended memory, with the numbers
+function problemHtml(p, fixed) {
+  const n = mb(p.normal);
+  if (p.tooBig.length) {
+    const names = [p.big, ...p.tooBig];
+    return `<div class="warnbox problem"><b>Only one big app at a time.</b>
+      <p>With Extend memory, one app can be bigger than the normal ${n}, but only one. ${names.map((x) => `<b>${esc(x)}</b>`).join(" and ")} both are, so they can't be on the calculator together.</p>
+      ${fixed ? "" : `<p style="margin:0"><b>Remove one of them to install the other.</b></p>`}</div>`;
+  }
+  return `<div class="warnbox problem"><b>The other apps don't fit in the normal ${n}.</b>
+    <p>With Extend memory, the calculator only finds apps that <i>start</i> in its normal ${n}. One big app can go past it, here <b>${esc(p.big)}</b> (${mb(p.bigSize)}), but all the other apps must fit inside the ${n}:</p>
+    <div class="plist">${p.others.map((o) => `<div><span>${esc(o.name)}</span><span>${mb(o.size)}</span></div>`).join("")}
+      <div class="bad"><span>Together</span><span>${mb(p.othersSize)} of ${n}</span></div></div>
+    ${fixed ? "" : `<p style="margin:0"><b>Remove at least ${mb(p.needFree)} of these apps</b> (in On my calculator), then try again.</p>`}</div>`;
+}
+
+// the closest way it fits (main.js findFit), offered by the OK button
+const fits = (plan) => plan.size <= plan.total && !plan.problem;
+const fixWords = (fix) => [
+  ...fix.removed.map((n) => `remove ${n}`),
+  ...fix.changes.map((c) => `switch ${c.name} to ${c.label}`),
+].join(", ").replace(/^./, (x) => x.toUpperCase());
+function fixHtml(fix) {
+  const parts = [
+    ...fix.removed.map((n) => `<li><b>${esc(n)}</b> is removed from your calculator (you can install it again later)</li>`),
+    ...fix.changes.map((c) => `<li><b>${esc(c.name)}</b> switches to its <b>${esc(c.label)}</b> size</li>`),
+  ];
+  return `<div class="fix"><b>It fits if:</b><ul>${parts.join("")}</ul></div>`;
+}
+
 function planHtml(plan, lead) {
   let h = `<p>${lead}</p>`;
   if (plan.lost.length)
     h += `<div class="warnbox"><b>${plan.lost.map(esc).join(", ")}</b> ${plan.lost.length > 1 ? "were" : "was"} not installed with Numstore, so ${plan.lost.length > 1 ? "they" : "it"} will be removed. Add the .nwa file first if you want to keep ${plan.lost.length > 1 ? "them" : "it"}.</div>`;
-  const fits = plan.size <= plan.total && !plan.problem;
-  if (plan.problem) h += `<div class="warnbox">${esc(plan.problem)}</div>`;
-  h += `<div class="space ${fits ? "" : "bad"}"><span>Apps after this</span><span>${mb(plan.size)} of ${mb(plan.total)}${plan.extended ? " (extended)" : ""}</span></div>`;
-  if (!fits && !plan.extended && S.calc.extend?.available && plan.size <= S.calc.extend.extended)
+  const ok = fits(plan);
+  if (plan.problem) h += problemHtml(plan.problem, !!plan.fix);
+  if (!ok && plan.fix) h += fixHtml(plan.fix);
+  if (!plan.problem && !(plan.fix && !ok)) h += `<div class="space ${ok ? "" : "bad"}"><span>Apps after this</span><span>${mb(plan.size)} of ${mb(plan.total)}${plan.extended ? " (extended)" : ""}</span></div>`;
+  if (!ok && !plan.extended && S.calc.extend?.available && plan.size <= S.calc.extend.extended)
     h += `<p class="hint" style="margin-top:8px">It would fit with <b>Extend memory</b> (button in the Storage panel, experimental).</p>`;
-  if (plan.extended && plan.size > plan.normal)
+  if (ok && plan.extended && plan.size > plan.normal)
     h += `<p class="hint" style="margin-top:8px">Uses the extended memory: part of it goes over the calculator's spare system copy.</p>`;
-  h += `<p class="hint" style="margin-top:12px">The calculator restarts after the change. This takes up to a minute for big apps.</p>`;
+  if (ok || plan.fix) h += `<p class="hint" style="margin-top:12px">The calculator restarts after the change. This takes up to a minute for big apps.</p>`;
   return h;
 }
 
@@ -339,6 +408,13 @@ async function askInstall(a, variant) {
   const plan = await window.store.plan({ action: "install", id: a.id, variant });
   const label = a.variants.find((x) => x.id === variant)?.label;
   const multi = a.variants.length > 1;
+  if (!fits(plan)) {
+    const what = a.installed ? `${a.name} (${label})` : a.name;
+    const lead = plan.fix ? `<b>${esc(what)} doesn't fit</b> with your apps as they are.` : `<b>${esc(what)} doesn't fit</b> on your calculator.`;
+    if (await modal(`${a.name} doesn't fit`, planHtml(plan, lead), plan.fix ? `${fixWords(plan.fix)} and install` : "Install", !!plan.fix?.removed.length, true) && plan.fix)
+      run(plan.fix.target, `Installing ${a.name}`);
+    return;
+  }
   if (a.installed) {
     if (await modal(`${a.name}: ${label}`, planHtml(plan, `${esc(a.name)} will be replaced by its ${esc(label)} version.`), `Switch to ${label}`))
       run(plan.target, `Switching ${a.name} to ${label}`);

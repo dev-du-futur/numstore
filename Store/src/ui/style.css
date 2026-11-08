@@ -130,6 +130,13 @@ main { flex: 1; overflow: auto; padding: 16px 24px 24px; }
 .sheet-bar { background: var(--orange); color: var(--white); font: 600 13px/32px var(--mono); text-transform: uppercase; text-align: center; letter-spacing: .5px; }
 .sheet-body { padding: 18px 20px; }
 .sheet p { margin: 0 0 10px; }
+.fix { background: #eef6ee; border: 1px solid #b9dcb9; padding: 10px 12px; border-radius: 6px; margin: 10px 0; font-size: 13px; }
+.fix ul { margin: 6px 0 0; padding-left: 18px; }
+.bar .seg.lost { background-image: repeating-linear-gradient(45deg, #ffffff88 0 4px, transparent 4px 8px) !important; background-color: var(--red) !important; }
+.warnbox p { margin: 6px 0 8px; }
+.plist { background: #ffffffaa; border-radius: 4px; padding: 4px 10px; margin-bottom: 8px; }
+.plist div { display: flex; justify-content: space-between; padding: 2px 0; font-family: var(--mono); font-size: 12px; }
+.plist .bad { border-top: 1px solid #f5d79c; margin-top: 2px; padding-top: 4px; color: var(--red); font-weight: 600; }
 .warnbox { background: #fff6e5; border: 1px solid #f5d79c; padding: 10px 12px; border-radius: 6px; margin: 10px 0; font-size: 13px; }
 .space { display: flex; justify-content: space-between; color: var(--grey); font-size: 13px; padding-top: 10px; border-top: 1px solid #ececee; margin-top: 12px; }
 .space.bad { color: var(--red); font-weight: 600; }

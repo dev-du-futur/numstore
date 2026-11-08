@@ -121,15 +121,65 @@ function extendOrder(apps, target) {
   target.forEach((t, i) => { if (sizeIn(apps, t) > sizeIn(apps, target[big])) big = i; });
   return [...target.slice(0, big), ...target.slice(big + 1), target[big]];
 }
-// null if it fits, or why not
+// null if it fits, or why not: { big, bigSize, others: [{name, size}], othersSize, normal, needFree, tooBig, text }
 function extendProblem(apps, target, normal, extended) {
   const sizes = target.map((t) => sizeIn(apps, t));
   const all = sizes.reduce((s, x) => s + x, 0);
   if (all > extended) return null; // plain "doesn't fit", shown by the size line
   const beforeLast = all - (sizes[sizes.length - 1] || 0);
-  if (beforeLast >= normal)
-    return `With extended memory, only the biggest app can go past the normal ${(normal / 1048576).toFixed(2)} MB: the others together must fit in it, and they take ${(beforeLast / 1048576).toFixed(2)} MB.`;
-  return null;
+  if (beforeLast < normal) return null;
+  const MB = (b) => (b / 1048576).toFixed(2) + " MB";
+  const last = target[target.length - 1];
+  const others = target.slice(0, -1).map((t, i) => ({ name: t.name, size: sizes[i] })).sort((x, y) => y.size - x.size);
+  const tooBig = others.filter((o) => o.size >= normal).map((o) => o.name); // a second big app can never fit
+  const needFree = beforeLast - normal + 1;
+  const text = tooBig.length
+    ? `Only one app bigger than ${MB(normal)} can be on the calculator at a time, and ${[last.name, ...tooBig].join(" and ")} both are.`
+    : `${last.name} uses the extended memory, so all the other apps must fit in the normal ${MB(normal)}. They take ${MB(beforeLast)}: remove at least ${MB(needFree)} of them.`;
+  return { big: last.name, bigSize: sizes[sizes.length - 1], others, othersSize: beforeLast, normal, needFree, tooBig, text };
+}
+
+// When the apps don't fit: the closest way that does, trying every size of every app and
+// leaving apps out (never `keep`, the one being installed). Fewest apps removed first, then
+// fewest size changes, then the most space kept. null if nothing works (or too many apps to try).
+function findFit(apps, target, keep, room) {
+  const fits = (list) => {
+    const all = list.reduce((s, t) => s + sizeIn(apps, t), 0);
+    if (!room.extend) return all <= room.total;
+    return all <= room.ext && !extendProblem(apps, extendOrder(apps, list), room.normal, room.ext);
+  };
+  const choices = target.map((t) => {
+    const a = apps.find((x) => x.name === t.name);
+    const vs = a ? a.variants.map((v) => v.id) : [t.variant];
+    return [t.variant, ...vs.filter((v) => v !== t.variant), ...(t.name === keep ? [] : [null])];
+  });
+  if (choices.reduce((n, c) => n * c.length, 1) > 50000) return null;
+  let best = null;
+  const walk = (i, pick) => {
+    if (i === target.length) {
+      const list = pick.filter((p) => p.variant !== null);
+      if (!fits(list)) return;
+      const removed = pick.filter((p) => p.variant === null).length;
+      const changed = pick.filter((p, k) => p.variant !== null && p.variant !== target[k].variant).length;
+      const size = list.reduce((s, t) => s + sizeIn(apps, t), 0);
+      const score = [removed, changed, -size];
+      const k = best ? score.findIndex((x, j) => x !== best.score[j]) : 0;
+      if (!best || (k >= 0 && score[k] < best.score[k]))
+        best = { score, pick: pick.slice() };
+      return;
+    }
+    for (const v of choices[i]) { pick.push({ name: target[i].name, variant: v }); walk(i + 1, pick); pick.pop(); }
+  };
+  walk(0, []);
+  if (!best || (best.score[0] === 0 && best.score[1] === 0)) return null;
+  const label = (name, v) => apps.find((x) => x.name === name)?.variants.find((x) => x.id === v)?.label || v;
+  let list = best.pick.filter((p) => p.variant !== null);
+  if (room.extend) list = extendOrder(apps, list);
+  return {
+    target: list,
+    removed: best.pick.filter((p) => p.variant === null).map((p) => p.name),
+    changes: best.pick.filter((p, k) => p.variant !== null && p.variant !== target[k].variant).map((p) => ({ name: p.name, label: label(p.name, p.variant) })),
+  };
 }
 
 // The calculator always gets the whole list of apps again (that's how nwlink works),
@@ -163,7 +213,7 @@ async function apply(target, label) {
       const need = target.reduce((s, t) => s + sizeIn(apps, t), 0);
       if (!extend && need > fresh.total) throw new Error(fresh.extendReason || "Extended memory isn't available on this calculator right now.");
       const problem = extend && extendProblem(apps, target, fresh.total, fresh.extTotal);
-      if (problem) throw new Error(problem);
+      if (problem) throw new Error(problem.text);
     }
     if (files.length === 0) {
       step("Removing the app…");
@@ -208,7 +258,11 @@ ipcMain.handle("plan", (_e, { action, id, variant, name }) => {
   if (extendOn()) kept = extendOrder(apps, kept);
   const size = kept.reduce((s, t) => s + sizeIn(apps, t), 0);
   const problem = extendOn() ? extendProblem(apps, kept, calc.total, calc.extTotal) : null;
-  return { target: kept, lost, size, total: appsTotal() || 0, extended: extendOn(), normal: calc.total || 0, problem };
+  const total = appsTotal() || 0;
+  const fix = action === "install" && (problem || size > total)
+    ? findFit(apps, kept, apps.find((x) => x.id === id).name, { extend: extendOn(), normal: calc.total, ext: calc.extTotal, total })
+    : null;
+  return { target: kept, lost, size, total, extended: extendOn(), normal: calc.total || 0, problem, fix };
 });
 
 ipcMain.handle("set-extend", (_e, on) => {
