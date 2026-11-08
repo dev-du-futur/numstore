@@ -136,7 +136,10 @@ class Catalog {
       const meta = readJSON(path.join(app.dir, "meta.json"), {});
       if (meta.version !== app.version || !exists(path.join(app.dir, "app.nwa"))) {
         for (const f of fs.readdirSync(app.dir)) fs.rmSync(path.join(app.dir, f), { force: true });
-        fs.writeFileSync(path.join(app.dir, "app.nwa"), await fetchBuf(app.nwa));
+        const nwa = await fetchBuf(app.nwa);
+        // GitHub sometimes answers with an HTML error page: don't send that to the calculator
+        if (nwa.length < 4 || nwa.readUInt32BE(0) !== 0x7f454c46) throw new Error(`GitHub didn't send ${app.name} properly. Try again in a minute.`);
+        fs.writeFileSync(path.join(app.dir, "app.nwa"), nwa);
         if (app.icon) try { fs.writeFileSync(path.join(app.dir, "icon.png"), await fetchBuf(app.icon)); } catch (e) {}
       }
       if (v.url) fs.writeFileSync(v.dataPath, await fetchBuf(v.url));
