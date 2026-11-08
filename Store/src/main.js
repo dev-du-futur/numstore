@@ -19,6 +19,18 @@ const bundledDir = app.isPackaged
 
 function send(ch, data) { if (win && !win.isDestroyed()) win.webContents.send(ch, data); }
 
+// ---- settings (userData/settings.json) ----------------------------------------
+let settings = {};
+const settingsFile = () => path.join(app.getPath("userData"), "settings.json");
+function loadSettings() { try { settings = JSON.parse(fs.readFileSync(settingsFile(), "utf8")); } catch (e) { settings = {}; } }
+function saveSettings() { try { fs.writeFileSync(settingsFile(), JSON.stringify(settings, null, 2)); } catch (e) {} }
+
+// "Extend memory" (experimental, see device.js): on when the user turned it on and this
+// calculator allows it; then apps may use the spare system copy too
+const extendOn = () => !!settings.extendMemory && !!calc.extendable;
+// apps already in the spare copy (installed extended before) count against the bigger space
+const appsTotal = () => (extendOn() || (calc.extendable && calc.extendedInUse) ? calc.extTotal : calc.total);
+
 function iconData(p) {
   try { return "data:image/png;base64," + fs.readFileSync(p).toString("base64"); } catch (e) { return null; }
 }
@@ -38,7 +50,9 @@ function state() {
   return {
     busy,
     calc: calc.connected
-      ? { connected: true, model: calc.model, version: calc.version, used: calc.used, total: calc.total, error: calc.error }
+      ? { connected: true, model: calc.model, version: calc.version, used: calc.used, total: appsTotal(), error: calc.error,
+          extend: { on: extendOn(), wanted: !!settings.extendMemory, available: !!calc.extendable, reason: calc.extendReason || "",
+                    normal: calc.total, extended: calc.extTotal || 0, inUse: !!calc.extendedInUse } }
       : { connected: false, error: calc.error, restarted: Date.now() - lastWrite < 180000 },
     installed,
     catalog: apps.map((a) => {
@@ -95,6 +109,29 @@ function friendly(e) {
 }
 
 // ---- install / remove ----------------------------------------------------------
+const sizeIn = (apps, t) => {
+  const a = apps.find((x) => x.name === t.name);
+  return a ? (a.variants.find((v) => v.id === t.variant) || a.variants[0]).size || 0 : 0;
+};
+// Extended memory: the calculator only finds apps that START in the normal space, so the
+// biggest app goes last, and only that one may run on into the spare system copy.
+function extendOrder(apps, target) {
+  if (target.length < 2) return target;
+  let big = 0;
+  target.forEach((t, i) => { if (sizeIn(apps, t) > sizeIn(apps, target[big])) big = i; });
+  return [...target.slice(0, big), ...target.slice(big + 1), target[big]];
+}
+// null if it fits, or why not
+function extendProblem(apps, target, normal, extended) {
+  const sizes = target.map((t) => sizeIn(apps, t));
+  const all = sizes.reduce((s, x) => s + x, 0);
+  if (all > extended) return null; // plain "doesn't fit", shown by the size line
+  const beforeLast = all - (sizes[sizes.length - 1] || 0);
+  if (beforeLast >= normal)
+    return `With extended memory, only the biggest app can go past the normal ${(normal / 1048576).toFixed(2)} MB: the others together must fit in it, and they take ${(beforeLast / 1048576).toFixed(2)} MB.`;
+  return null;
+}
+
 // The calculator always gets the whole list of apps again (that's how nwlink works),
 // so every change = apps that stay (in their order, same size variant) + the new one.
 // A target is a list of { name, variant }.
@@ -107,6 +144,7 @@ async function apply(target, label) {
   const step = (text, detail) => send("progress", { label, text, detail });
   try {
     const apps = catalog.all();
+    if (settings.extendMemory) target = extendOrder(apps, target);
     const files = [];
     for (const t of target) {
       const a = apps.find((x) => x.name === t.name);
@@ -114,11 +152,24 @@ async function apply(target, label) {
       files.push(await catalog.fetchVariant(a, t.variant, step));
     }
     if (!device.findDevice()) throw new Error("Calculator not connected");
+    let extend = false;
+    if (settings.extendMemory && files.length) {
+      // check again right before writing: after a system update the calculator may run its
+      // second copy, which extended apps would overwrite
+      step("Checking the calculator…");
+      const fresh = await device.scan();
+      if (!fresh.connected) throw new Error("Calculator not connected");
+      extend = !!fresh.extendable;
+      const need = target.reduce((s, t) => s + sizeIn(apps, t), 0);
+      if (!extend && need > fresh.total) throw new Error(fresh.extendReason || "Extended memory isn't available on this calculator right now.");
+      const problem = extend && extendProblem(apps, target, fresh.total, fresh.extTotal);
+      if (problem) throw new Error(problem);
+    }
     if (files.length === 0) {
       step("Removing the app…");
       await device.removeAll();
     } else {
-      await installer.install(files, step);
+      await installer.install(files, step, { extend });
     }
     step("Done");
     send("done", { ok: true, label });
@@ -153,13 +204,19 @@ ipcMain.handle("plan", (_e, { action, id, variant, name }) => {
     target = current.filter((t) => t.name !== name);
   }
   const lost = target.filter((t) => !t.known).map((t) => t.name);
-  const kept = target.filter((t) => t.known).map(({ name, variant }) => ({ name, variant }));
-  const sizeOf = (t) => {
-    const a = apps.find((x) => x.name === t.name);
-    return (a.variants.find((v) => v.id === t.variant) || a.variants[0]).size || 0;
-  };
-  const size = kept.reduce((s, t) => s + sizeOf(t), 0);
-  return { target: kept, lost, size, total: calc.total || 0 };
+  let kept = target.filter((t) => t.known).map(({ name, variant }) => ({ name, variant }));
+  if (extendOn()) kept = extendOrder(apps, kept);
+  const size = kept.reduce((s, t) => s + sizeIn(apps, t), 0);
+  const problem = extendOn() ? extendProblem(apps, kept, calc.total, calc.extTotal) : null;
+  return { target: kept, lost, size, total: appsTotal() || 0, extended: extendOn(), normal: calc.total || 0, problem };
+});
+
+ipcMain.handle("set-extend", (_e, on) => {
+  if (busy) return false;
+  settings.extendMemory = !!on;
+  saveSettings();
+  push();
+  return true;
 });
 
 ipcMain.handle("apply", (_e, { target, label }) => { apply(target, label); return true; });
@@ -235,6 +292,7 @@ function createWindow() {
 
 app.whenReady().then(async () => {
   installer.setDataDir(app.getPath("userData"));
+  loadSettings();
   catalog = new Catalog(bundledDir, app.getPath("userData"));
   createWindow();
   updates = updater.start({ send, isBusy: () => busy });

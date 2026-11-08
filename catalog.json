@@ -1169,6 +1169,29 @@
       ]
     },
     {
+      "id": "numplay-fivenightsatfreddysworld",
+      "name": "FNaF World",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Fan games",
+      "description": "Unofficial fan game. The FNaF characters in a turn-based adventure. Needs Extend memory.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "Fan game with the original's pictures. Not affiliated with Scott Cawthon.",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/FiveNightsAtFreddysWorld.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/fan-fivenightsatfreddysworld.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 4849664,
+          "data": null
+        }
+      ]
+    },
+    {
       "id": "numplay-flappybird",
       "name": "Flappy Bird",
       "version": "1.24.15",

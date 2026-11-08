@@ -10,5 +10,6 @@ contextBridge.exposeInMainWorld("store", {
   open: (url) => ipcRenderer.invoke("open", url),
   restartToUpdate: () => ipcRenderer.invoke("restart-update"),
   version: () => ipcRenderer.invoke("version"),
+  setExtend: (on) => ipcRenderer.invoke("set-extend", on),
   on: (ch, fn) => ipcRenderer.on(ch, (_e, d) => fn(d)),
 });

@@ -12,6 +12,12 @@ const APP_SECTOR = 0x10000; // apps are padded to 64 KB, like nwlink does
 const MODELS = { 0x0120: "N0120", 0x0110: "N0110", 0x0115: "N0115", 0x0200: "N0200" };
 // RAM address of the slot info (N0110/N0115 use 0x20000000, N0120 0x24000000)
 const SLOT_INFO_RAM = { N0120: 0x24000000, N0110: 0x20000000, N0115: 0x20000000 };
+// "Extend memory" (experimental): the OS has two copies, slot A from 0x90000000 and slot B
+// from 0x90400000, and runs one. While it runs slot A, apps may also use slot B, up to the
+// end of the 8 MB flash. Only tried on the N0120 (Epsilon 26.4).
+const SLOT_B = 0x90400000;
+const EXT_END = 0x90800000;
+const EXT_MODELS = ["N0120"];
 
 function findDevice() {
   return getDeviceList().find(
@@ -142,7 +148,8 @@ class Calculator {
       if (slot.toString("hex", 0, 4) === "badbeeef") break;
     }
     if (slot.toString("hex", 0, 4) !== "badbeeef") throw new Error("slot info not found: " + slot.toString("hex"));
-    const kernel = await this.read(slot.readUInt32LE(4), 24);
+    const kernelAddr = slot.readUInt32LE(4);
+    const kernel = await this.read(kernelAddr, 24);
     const uAddr = slot.readUInt32LE(8);
     const u = await this.read(uAddr, 48);
     if (u.toString("hex", 0, 4) !== "feedc0de") throw new Error("userland header not found");
@@ -154,15 +161,17 @@ class Calculator {
       storageSize: u.readUInt32LE(16),
       appsStart: u.readUInt32LE(20),
       appsEnd: u.readUInt32LE(24),
+      runningSlot: kernelAddr < SLOT_B ? "A" : "B",
     };
   }
 
   // Walk the external apps region: each app starts on a 64 KB boundary with
   // [magic, api level, name offset, icon size, icon offset, entry, end offset, magic]
-  async apps(info) {
+  // limit: how far apps may go (the official end, or EXT_END when memory can be extended)
+  async apps(info, limit = info.appsEnd) {
     const list = [];
     let addr = info.appsStart;
-    while (addr + 32 <= info.appsEnd) {
+    while (addr + 32 <= limit) {
       const h = await this.read(addr, 32);
       if (h.readUInt32LE(0) !== APP_MAGIC || h.readUInt32LE(28) !== APP_MAGIC) break;
       const nameOff = h.readUInt32LE(8), iconSize = h.readUInt32LE(12), iconOff = h.readUInt32LE(16);
@@ -172,7 +181,7 @@ class Calculator {
       // the app's code + data ends after `end` (.data is stored right after); find the next
       // app by looking at the following 64 KB boundaries
       let next = addr + Math.ceil((end + 1) / APP_SECTOR) * APP_SECTOR;
-      while (next + 4 <= info.appsEnd) {
+      while (next + 4 <= limit) {
         const m = (await this.read(next, 4)).readUInt32LE(0);
         if (m === APP_MAGIC || m === 0xffffffff) break;
         next += APP_SECTOR;
@@ -181,6 +190,17 @@ class Calculator {
       addr = next;
     }
     return { apps: list, used: addr - info.appsStart, total: info.appsEnd - info.appsStart };
+  }
+
+  // can apps go over the spare OS copy (slot B)? -> { ok, reason }
+  extension(info) {
+    const flash = this.alts.find((a) => /^@Flash/.test(a.name));
+    if (!EXT_MODELS.includes(this.model)) return { ok: false, reason: `Only tried on the N0120 so far (this is an ${this.model}).` };
+    if (info.runningSlot !== "A")
+      return { ok: false, reason: "Your calculator is running its second system copy right now. Update it once on my.numworks.com, then try again." };
+    if (!flash || flash.end < EXT_END || info.appsEnd > SLOT_B)
+      return { ok: false, reason: "This calculator's memory layout isn't one Numstore knows." };
+    return { ok: true, reason: "" };
   }
 }
 
@@ -207,7 +227,9 @@ async function scan() {
   try {
     await c.open();
     const info = await c.info();
-    const apps = await c.apps(info);
+    const ext = c.extension(info);
+    // reading further is harmless, and shows apps that already use the extended space
+    const apps = await c.apps(info, ext.ok ? EXT_END : info.appsEnd);
     return {
       connected: true,
       model: c.model,
@@ -216,6 +238,11 @@ async function scan() {
       ...apps,
       appsStart: info.appsStart,
       appsEnd: info.appsEnd,
+      runningSlot: info.runningSlot,
+      extendable: ext.ok,
+      extendReason: ext.reason,
+      extTotal: EXT_END - info.appsStart,
+      extendedInUse: apps.used > apps.total, // apps already reach into the spare copy
     };
   } finally {
     await c.close();
@@ -259,7 +286,7 @@ function watch(cb) {
   return () => { usb.off("attach", cb); usb.off("detach", cb); };
 }
 
-module.exports = { scan, watch, removeAll, findDevice, Calculator, APP_SECTOR };
+module.exports = { scan, watch, removeAll, findDevice, Calculator, APP_SECTOR, EXT_END };
 
 if (require.main === module) {
   scan().then(

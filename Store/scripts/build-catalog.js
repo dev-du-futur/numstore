@@ -64,7 +64,8 @@ async function linkedGames(online) {
   // fan games (fangames.json): own category, and our own icons, never the original game's art
   const ff = path.join(ROOT, "Apps", "NumPlay", "fangames.json");
   const fans = fs.existsSync(ff) ? JSON.parse(fs.readFileSync(ff, "utf8")).games.map((g) => ({ ...g, fan: true })) : [];
-  const APPS_SPACE = 2555904; // N0120 apps region: bigger apps can never be installed
+  const APPS_SPACE = 2555904; // N0120's normal apps space
+  const EXT_SPACE = 0x90800000 - 0x90180000; // with "Extend memory" (see src/device.js)
   for (const g of [...m.games, ...fans]) {
     const id = "numplay-" + g.file.replace(/\.nwa$/, "").toLowerCase();
     const url = `https://github.com/${m.repo}/releases/download/${m.tag}/${g.file}`;
@@ -81,7 +82,7 @@ async function linkedGames(online) {
       fs.writeFileSync(file, buf);
     }
     const size = await installer.measure(file, null, os.tmpdir());
-    if (size > APPS_SPACE) { console.log(`${g.name}: ${(size / 1048576).toFixed(2)} MB, too big for the calculator, skipped`); continue; }
+    if (size > EXT_SPACE) { console.log(`${g.name}: ${(size / 1048576).toFixed(2)} MB, too big even with extended memory, skipped`); continue; }
     let iconName = null;
     if (g.fan) {
       iconName = "fan-" + g.file.replace(/\.nwa$/, "").toLowerCase() + ".png"; // tools/make_fan_icons.py
@@ -93,7 +94,7 @@ async function linkedGames(online) {
     }
     online.push({
       id, name: g.name, version: m.tag.replace(/^v/, ""), author: m.author, category: g.fan ? "Fan games" : "Games",
-      description: (g.fan ? "Unofficial fan game. " : "") + g.description, defaultVariant: "default",
+      description: (g.fan ? "Unofficial fan game. " : "") + g.description + (size > APPS_SPACE ? " Needs Extend memory." : ""), defaultVariant: "default",
       license: m.license, homepage: `https://github.com/${m.repo}`, credit: g.credit || "",
       nwa: url, icon: iconName ? RAW + `Apps/NumPlay/icons/${iconName}` : null,
       variants: [{ id: "default", label: "", description: "", size, data: null }],

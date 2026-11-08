@@ -85,6 +85,7 @@ function renderStorage() {
     after += preview.size;
   }
   if (preview?.remove) after -= S.installed.find((a) => a.name === preview.remove)?.size || 0;
+  renderExtend(c, bar);
   const free = c.total - used;
   text.innerHTML = preview
     ? (after > c.total
@@ -92,6 +93,72 @@ function renderStorage() {
         : `After this: <b>${mb(c.total - after)}</b> free of ${mb(c.total)}`)
     : `<b>${mb(free)}</b> free of ${mb(c.total)}`;
   legend.insertAdjacentHTML("beforeend", `<span><i style="background:#e4e5e8"></i>Free · ${mb(free)}</span>`);
+}
+
+// ---- extend memory (experimental: apps may use the calculator's spare system copy) ----
+function renderExtend(c, bar) {
+  const btn = $("#extend-btn"), x = c.extend;
+  $("#storage .extend-note")?.remove();
+  if (!x || (!x.available && !x.wanted && !x.inUse)) { btn.classList.add("hidden"); return; }
+  btn.classList.remove("hidden");
+  btn.disabled = S.busy;
+  if (x.on) {
+    btn.className = "key small on";
+    btn.textContent = "Extended memory: on";
+    btn.title = "Apps may use the calculator's spare system copy. Click to turn it off.";
+    btn.onclick = askExtendOff;
+    const l = document.createElement("div");
+    l.className = "limit";
+    l.style.left = (100 * x.normal / c.total) + "%";
+    l.title = `Normal space ends here (${mb(x.normal)}); after it, the spare system copy`;
+    bar.appendChild(l);
+  } else if (x.available) {
+    btn.className = "key small";
+    btn.textContent = "Extend memory";
+    btn.title = `Raise the space for apps from ${mb(x.normal)} to ${mb(x.extended)} (experimental)`;
+    btn.onclick = askExtendOn;
+    if (x.inUse) $("#storage").insertAdjacentHTML("beforeend",
+      `<div class="extend-note">Your apps already use the extended memory. Turn it on to keep installing apps there; with it off, the next install has to fit in ${mb(x.normal)}.</div>`);
+  } else { // turned on, but this calculator can't right now
+    btn.className = "key small";
+    btn.textContent = "Extended memory: unavailable";
+    btn.title = x.reason;
+    btn.onclick = askExtendOff;
+    $("#storage").insertAdjacentHTML("beforeend", `<div class="extend-note">${esc(x.reason)}</div>`);
+  }
+}
+
+async function askExtendOn() {
+  const x = S.calc.extend;
+  const html = `
+    <p>Your calculator keeps a <b>spare copy of its system</b> that it doesn't use. Numstore can install apps over it,
+    raising the space for apps from <b>${mb(x.normal)}</b> to <b>${mb(x.extended)}</b>: enough for big games like FNaF World.
+    One limit: only <b>one</b> app can use the extra space, the biggest one. The others still share the normal ${mb(x.normal)}.</p>
+    <div class="warnbox"><b>This is unofficial, and at your own risk.</b> NumWorks doesn't support it.
+    It works like Nwagyu's “Nwagra” and was tested on an N0120 with Epsilon 26.4.</div>
+    <p><b>What can go wrong</b></p>
+    <ul class="risks">
+      <li><b>No backup system any more.</b> If the calculator's system ever gets damaged, it can't fall back on the spare copy.
+        You would reinstall it with NumWorks' recovery on numworks.com, which erases your apps and files.</li>
+      <li><b>Updates remove the apps stored there.</b> Updating the calculator on numworks.com writes the new system over the spare copy.
+        Reinstall those apps from Numstore afterwards: it checks first that it's still safe.</li>
+      <li><b>Possible exam-mode message.</b> On some system versions, apps outside the normal space make the calculator say exam mode is on.
+        If that happens, turn this off and reinstall your apps in the normal space.</li>
+    </ul>
+    <label class="agree"><input type="checkbox" id="m-agree"> I understand the risks and want to extend the memory</label>
+    <p class="hint" style="margin-top:10px">Nothing changes on the calculator until your next install. You can turn it off any time.</p>`;
+  if (await modal("Extend memory", html, "Extend memory", false, true)) window.store.setExtend(true);
+}
+
+async function askExtendOff() {
+  const x = S.calc.extend;
+  const tooBig = S.calc.used > x.normal;
+  const html = `
+    <p>Numstore will install apps in the normal space again (${mb(x.normal)}).</p>
+    ${tooBig ? `<div class="warnbox">Your apps take <b>${mb(S.calc.used)}</b> right now, more than the normal ${mb(x.normal)}.
+      They stay where they are, but the next install has to fit in ${mb(x.normal)}: remove the big ones first.</div>` : ""}
+    <p class="hint">The spare system copy comes back the next time you update the calculator on numworks.com.</p>`;
+  if (await modal("Normal memory", html, "Turn off")) window.store.setExtend(false);
 }
 
 // ---- views --------------------------------------------------------------------
@@ -234,10 +301,11 @@ function render() {
 }
 
 // ---- dialogs ------------------------------------------------------------------
-function modal(title, html, okText, danger) {
+function modal(title, html, okText, danger, wide) {
   return new Promise((res) => {
     $("#m-title").textContent = title;
     $("#m-body").innerHTML = html;
+    $("#modal .sheet").classList.toggle("wide", !!wide);
     const ok = $("#m-ok");
     ok.textContent = okText;
     ok.className = danger ? "key dark" : "key orange";
@@ -246,6 +314,9 @@ function modal(title, html, okText, danger) {
     ok.onclick = () => close(true);
     $("#m-cancel").onclick = () => close(false);
     ok.disabled = !!$("#m-body .space.bad");
+    // a dialog with an "I understand" box: OK only once it's ticked
+    const agree = $("#m-agree");
+    if (agree) { ok.disabled = true; agree.onchange = () => { ok.disabled = !agree.checked; }; }
   });
 }
 
@@ -253,8 +324,13 @@ function planHtml(plan, lead) {
   let h = `<p>${lead}</p>`;
   if (plan.lost.length)
     h += `<div class="warnbox"><b>${plan.lost.map(esc).join(", ")}</b> ${plan.lost.length > 1 ? "were" : "was"} not installed with Numstore, so ${plan.lost.length > 1 ? "they" : "it"} will be removed. Add the .nwa file first if you want to keep ${plan.lost.length > 1 ? "them" : "it"}.</div>`;
-  const fits = plan.size <= plan.total;
-  h += `<div class="space ${fits ? "" : "bad"}"><span>Apps after this</span><span>${mb(plan.size)} of ${mb(plan.total)}</span></div>`;
+  const fits = plan.size <= plan.total && !plan.problem;
+  if (plan.problem) h += `<div class="warnbox">${esc(plan.problem)}</div>`;
+  h += `<div class="space ${fits ? "" : "bad"}"><span>Apps after this</span><span>${mb(plan.size)} of ${mb(plan.total)}${plan.extended ? " (extended)" : ""}</span></div>`;
+  if (!fits && !plan.extended && S.calc.extend?.available && plan.size <= S.calc.extend.extended)
+    h += `<p class="hint" style="margin-top:8px">It would fit with <b>Extend memory</b> (button in the Storage panel, experimental).</p>`;
+  if (plan.extended && plan.size > plan.normal)
+    h += `<p class="hint" style="margin-top:8px">Uses the extended memory: part of it goes over the calculator's spare system copy.</p>`;
   h += `<p class="hint" style="margin-top:12px">The calculator restarts after the change. This takes up to a minute for big apps.</p>`;
   return h;
 }

@@ -90,11 +90,12 @@ function modulesDir() {
   return here.replace("app.asar", "app.asar.unpacked");
 }
 
-function run(js, args, onLine) {
+function run(js, args, onLine, extend = false) {
   return new Promise((res, rej) => {
     const env = { ...process.env, ELECTRON_RUN_AS_NODE: "1", NODE_PATH: modulesDir() };
-    const tty = path.join(__dirname, "tty.js").replace("app.asar", "app.asar.unpacked");
-    const p = spawn(process.execPath, ["-r", tty, js, ...args], { env, windowsHide: true });
+    const pre = (f) => ["-r", path.join(__dirname, f).replace("app.asar", "app.asar.unpacked")];
+    // extend.js: "extend memory" (see device.js), only when the user turned it on
+    const p = spawn(process.execPath, [...pre("tty.js"), ...(extend ? pre("extend.js") : []), js, ...args], { env, windowsHide: true });
     let out = "";
     // nwlink prints its progress all along (see tty.js); a minute of silence means it is stuck
     // (it once waited forever after erasing the calculator), so stop it instead of hanging
@@ -130,7 +131,8 @@ function lastError(out) {
 }
 
 // apps: [{ nwa: path, data: path|null }] in install order
-async function install(apps, onStep) {
+// opts.extend: use the extended memory (the caller has checked the calculator allows it)
+async function install(apps, onStep, opts = {}) {
   const js = await ensureNwlink(onStep);
   onStep && onStep("Writing to the calculator…");
   const args = ["install-nwa", ...apps.map((a) => a.nwa)];
@@ -143,12 +145,12 @@ async function install(apps, onStep) {
     onStep("Writing to the calculator…", { percent: +m[1], eta: eta ? +eta[1] : null });
   };
   try {
-    return await run(js, args, onLine);
+    return await run(js, args, onLine, !!opts.extend);
   } catch (e) {
     // right after a scan or a replug the calculator can be briefly unavailable: try once more
     if (!/no devices found|selection failure/i.test(e.message)) throw e;
     await new Promise((r) => setTimeout(r, 2500));
-    return run(js, args, onLine);
+    return run(js, args, onLine, !!opts.extend);
   }
 }
 

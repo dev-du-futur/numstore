@@ -48,7 +48,19 @@ svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width:
 .storage h2 { font-size: 13px; margin: 0; text-transform: uppercase; letter-spacing: .6px; color: var(--grey); font-weight: 600; }
 #storage-text { color: var(--grey); font-size: 13px; }
 #storage-text b { color: var(--ink); }
-.bar { height: 14px; border-radius: 3px; background: #e4e5e8; overflow: hidden; display: flex; }
+.storage-right { display: flex; align-items: center; gap: 12px; }
+.key.small { padding: 4px 12px; font-size: 12px; }
+.key.on { background: var(--dark); border-color: #26282d; color: var(--white); box-shadow: 0 1px 0 #1d1f23; }
+.bar { height: 14px; border-radius: 3px; background: #e4e5e8; overflow: hidden; display: flex; position: relative; }
+/* where the normal space ends when memory is extended */
+.bar .limit { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--dark); opacity: .7; }
+.extend-note { color: var(--grey); font-size: 12px; margin-top: 8px; }
+.risks { margin: 6px 0 10px; padding-left: 18px; font-size: 13px; }
+.risks li { margin-bottom: 6px; }
+.agree { display: flex; gap: 8px; align-items: flex-start; font-size: 13px; font-weight: 600; margin-top: 10px; cursor: pointer; }
+.agree input { margin-top: 2px; }
+.sheet.wide { width: min(560px, 94vw); }
+.sheet-body { max-height: 78vh; overflow: auto; }
 .bar .seg { height: 100%; transition: width .3s ease; border-right: 2px solid var(--white); }
 .bar .seg.preview { background-image: repeating-linear-gradient(45deg, #ffffff66 0 5px, transparent 5px 10px) !important; }
 .bar .seg.leaving { opacity: .3; }
