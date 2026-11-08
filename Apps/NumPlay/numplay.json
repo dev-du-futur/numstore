@@ -30,6 +30,7 @@
     { "file": "NumDrive.nwa", "name": "NumDrive", "description": "A Drive Mad style physics driving game: 157 levels of cars, bridges and water.", "credit": "Inspired by Drive Mad; not affiliated with its makers." },
     { "file": "NumPico.nwa", "name": "NumPico", "description": "A PICO-8 player for the calculator; add your own carts with NumPlay Studio.", "credit": "femto8 by Ben Baker (MIT), z8lua by Sam Hocevar." },
     { "file": "NumVisuals.nwa", "name": "NumVisuals", "description": "Moving backgrounds (aurora, plasma, warp, code rain…) with a clock, stopwatch, timer, counter or your own words on top." },
+    { "file": "Doom.nwa", "name": "Doom", "description": "The 1993 classic on its own engine: the shareware episode Knee-Deep in the Dead, all 9 levels. Big: about 2 MB on the calculator.", "credit": "RP2040 Doom by Graham Sanderson, from Chocolate Doom and id Software's GPL source (GPL-2.0); shareware DOOM1.WAD by id Software. Not affiliated with id Software, ZeniMax or Bethesda." },
     { "file": "NumPowder.nwa", "name": "NumPowder", "description": "A falling-sand sandbox after The Powder Toy (GPL-3.0): powders, liquids, fire and more.", "credit": "Materials, font and icons from The Powder Toy (GPL-3.0)." }
   ]
 }
