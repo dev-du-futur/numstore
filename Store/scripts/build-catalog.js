@@ -61,25 +61,41 @@ async function linkedGames(online) {
   fs.mkdirSync(cache, { recursive: true });
   fs.mkdirSync(icons, { recursive: true });
   const nwi = require("../src/nwi");
-  for (const g of m.games) {
+  // fan games (fangames.json): own category, and our own icons, never the original game's art
+  const ff = path.join(ROOT, "Apps", "NumPlay", "fangames.json");
+  const fans = fs.existsSync(ff) ? JSON.parse(fs.readFileSync(ff, "utf8")).games.map((g) => ({ ...g, fan: true })) : [];
+  const APPS_SPACE = 2555904; // N0120 apps region: bigger apps can never be installed
+  for (const g of [...m.games, ...fans]) {
     const id = "numplay-" + g.file.replace(/\.nwa$/, "").toLowerCase();
     const url = `https://github.com/${m.repo}/releases/download/${m.tag}/${g.file}`;
     const file = path.join(cache, g.file);
     if (!fs.existsSync(file)) {
-      const buf = await download(url);
-      // GitHub sometimes answers with an HTML error page: only keep real apps (ELF files)
-      if (buf.readUInt32BE(0) !== 0x7f454c46) throw new Error(`${url}: not a NumWorks app (GitHub error page?)`);
+      // GitHub sometimes answers with an error (or an HTML error page): try a few times,
+      // and only keep real apps (ELF files)
+      let buf = null;
+      for (let t = 0; t < 4 && !buf; t++) {
+        if (t) await new Promise((r) => setTimeout(r, 5000 * t));
+        try { const b = await download(url); if (b.length > 4 && b.readUInt32BE(0) === 0x7f454c46) buf = b; } catch (e) {}
+      }
+      if (!buf) throw new Error(`${url}: not a NumWorks app after 4 tries (GitHub error page?)`);
       fs.writeFileSync(file, buf);
     }
     const size = await installer.measure(file, null, os.tmpdir());
-    const icon = elfSection(fs.readFileSync(file), ".rodata.eadk_app_icon");
-    const img = icon && nwi.decode(icon);
-    if (img) fs.writeFileSync(path.join(icons, id + ".png"), png(img.width, img.height, img.rgba));
+    if (size > APPS_SPACE) { console.log(`${g.name}: ${(size / 1048576).toFixed(2)} MB, too big for the calculator, skipped`); continue; }
+    let iconName = null;
+    if (g.fan) {
+      iconName = "fan-" + g.file.replace(/\.nwa$/, "").toLowerCase() + ".png"; // tools/make_fan_icons.py
+      if (!fs.existsSync(path.join(icons, iconName))) iconName = null;
+    } else {
+      const icon = elfSection(fs.readFileSync(file), ".rodata.eadk_app_icon");
+      const img = icon && nwi.decode(icon);
+      if (img) { iconName = id + ".png"; fs.writeFileSync(path.join(icons, iconName), png(img.width, img.height, img.rgba)); }
+    }
     online.push({
-      id, name: g.name, version: m.tag.replace(/^v/, ""), author: m.author, category: "Games",
-      description: g.description, defaultVariant: "default",
+      id, name: g.name, version: m.tag.replace(/^v/, ""), author: m.author, category: g.fan ? "Fan games" : "Games",
+      description: (g.fan ? "Unofficial fan game. " : "") + g.description, defaultVariant: "default",
       license: m.license, homepage: `https://github.com/${m.repo}`, credit: g.credit || "",
-      nwa: url, icon: img ? RAW + `Apps/NumPlay/icons/${id}.png` : null,
+      nwa: url, icon: iconName ? RAW + `Apps/NumPlay/icons/${iconName}` : null,
       variants: [{ id: "default", label: "", description: "", size, data: null }],
     });
     console.log(`${g.name} (NumPlay ${m.tag}): ${(size / 1048576).toFixed(2)} MB`);

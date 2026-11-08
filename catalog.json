@@ -707,6 +707,1087 @@
           "data": null
         }
       ]
+    },
+    {
+      "id": "numplay-amongus",
+      "name": "Among Us",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Fan games",
+      "description": "Unofficial fan game. Do your tasks on the Skeld and find the impostor among the bots.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "Fan game with the original's pictures. Not affiliated with Innersloth.",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/AmongUs.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/fan-amongus.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 1638400,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-angrybirds",
+      "name": "Angry Birds",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Fan games",
+      "description": "Unofficial fan game. Sling birds at the pigs' forts: the Chrome edition's 429 levels, on Box2D physics.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "Fan game with the original's pictures. Box2D by Erin Catto (zlib). Not affiliated with Rovio.",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/AngryBirds.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/fan-angrybirds.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 1769472,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-badtimesimulator",
+      "name": "Bad Time Simulator",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Fan games",
+      "description": "Unofficial fan game. Survive Sans's fight: jcw87's 24 attack scripts.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "After jcw87's Bad Time Simulator, with Undertale's sprites. Not affiliated with jcw87 or Toby Fox.",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/BadTimeSimulator.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/fan-badtimesimulator.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 196608,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-balatro",
+      "name": "Balatro",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Fan games",
+      "description": "Unofficial fan game. Poker hands, jokers and big multipliers in a roguelike deck builder.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "Fan game with art adapted from the original; m6x11 font by Daniel Linssen. Not affiliated with LocalThunk.",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/Balatro.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/fan-balatro.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 262144,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-bindingofisaac",
+      "name": "The Binding of Isaac",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Fan games",
+      "description": "Unofficial fan game. Cry your way through the basement's rooms, items and bosses.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "Fan game with the original's pictures. Not affiliated with Edmund McMillen, Florian Himsl or Nicalis.",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/BindingOfIsaac.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/fan-bindingofisaac.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 1179648,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-buckshotroulette",
+      "name": "Buckshot Roulette",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Fan games",
+      "description": "Unofficial fan game. A shotgun, live and blank shells, items, and the dealer across the table.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "Fan game with scenes rendered from the original. Not affiliated with Mike Klubnika.",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/BuckshotRoulette.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/fan-buckshotroulette.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 262144,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-catninja",
+      "name": "Cat Ninja",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Fan games",
+      "description": "Unofficial fan game. The Flash platformer's 30 levels: dodge lasers, grab the keys.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "Fan port of the original's code and pictures. Not affiliated with Richman Stewart or TrackMill.",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/CatNinja.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/fan-catninja.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 196608,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-celeste",
+      "name": "Celeste",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Fan games",
+      "description": "Unofficial fan game. Climb the mountain: jump, dash and climb through tight platforming rooms.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "Fan game with the original's pictures, maps and texts. Not affiliated with Maddy Makes Games.",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/Celeste.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/fan-celeste.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 2031616,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-championisland",
+      "name": "Champion Island",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Fan games",
+      "description": "Unofficial fan game. The 2021 Doodle Champion Island Games: explore the island and win its sports.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "Fan game with the doodle's pictures, maps and texts; PixelMplus font. Not affiliated with Google.",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/ChampionIsland.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/fan-championisland.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 2031616,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-clashroyale",
+      "name": "Clash Royale",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Fan games",
+      "description": "Unofficial fan game. The 2016 cards, towers and rules against a bot.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "Fan game with the original's arenas, troops and card art. Not affiliated with Supercell.",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/ClashRoyale.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/fan-clashroyale.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 1376256,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-cookieclicker",
+      "name": "Cookie Clicker",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Fan games",
+      "description": "Unofficial fan game. Bake cookies, buy grandmas, never stop clicking. Version 2.058.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "Fan game with the original's pictures and texts. Not affiliated with Orteil or DashNet.",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/CookieClicker.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/fan-cookieclicker.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 1179648,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-crossyroad",
+      "name": "Crossy Road",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Fan games",
+      "description": "Unofficial fan game. Hop across roads, rivers and rails without getting squashed.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "Fan game with characters built from the original's models. Not affiliated with Hipster Whale.",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/CrossyRoad.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/fan-crossyroad.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 65536,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-deltarune",
+      "name": "Deltarune",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Fan games",
+      "description": "Unofficial fan game. Chapter 1: the Dark World, its battles and its texts.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "Fan game with Chapter 1's pictures, rooms and texts. Not affiliated with Toby Fox.",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/Deltarune.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/fan-deltarune.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 917504,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-donkeykong",
+      "name": "Donkey Kong",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Fan games",
+      "description": "Unofficial fan game. Climb the girders, jump the barrels, save Pauline. Arcade rules, new pictures.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "Fan game after the arcade program, with new pictures. Not affiliated with Nintendo.",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/DonkeyKong.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/fan-donkeykong.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 65536,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-dune",
+      "name": "Dune",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Fan games",
+      "description": "Unofficial fan game. Ride the dunes, fly off their tops, land smooth.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "Port of Inlogic's Dune Rider, inspired by Team Lava's Dune!; p2.js (MIT). Not affiliated with them.",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/Dune.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/fan-dune.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 327680,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-finalearth2",
+      "name": "The Final Earth 2",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Fan games",
+      "description": "Unofficial fan game. Build a city on a new planet in this pixel-art city builder.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "Fan game with the original's pictures; sprites by LukXD99. Not affiliated with Florian van Strien.",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/FinalEarth2.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/fan-finalearth2.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 786432,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-fivenightsatfreddys",
+      "name": "Five Nights at Freddy's",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Fan games",
+      "description": "Unofficial fan game. Survive five nights in the security office.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "Fan game with the original's pictures. Not affiliated with Scott Cawthon.",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/FiveNightsAtFreddys.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/fan-fivenightsatfreddys.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 1114112,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-fivenightsatfreddys2",
+      "name": "Five Nights at Freddy's 2",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Fan games",
+      "description": "Unofficial fan game. No doors this time: a mask, a flashlight and a music box.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "Fan game with the original's pictures. Not affiliated with Scott Cawthon.",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/FiveNightsAtFreddys2.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/fan-fivenightsatfreddys2.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 1835008,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-fivenightsatfreddys3",
+      "name": "Five Nights at Freddy's 3",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Fan games",
+      "description": "Unofficial fan game. Thirty years later, one animatronic and failing systems.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "Fan game with the original's pictures. Not affiliated with Scott Cawthon.",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/FiveNightsAtFreddys3.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/fan-fivenightsatfreddys3.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 1376256,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-fivenightsatfreddys4",
+      "name": "Five Nights at Freddy's 4",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Fan games",
+      "description": "Unofficial fan game. A bedroom, two doors, a closet and a flashlight.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "Fan game with the original's pictures. Not affiliated with Scott Cawthon.",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/FiveNightsAtFreddys4.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/fan-fivenightsatfreddys4.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 1310720,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-flappybird",
+      "name": "Flappy Bird",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Fan games",
+      "description": "Unofficial fan game. Tap to flap between the pipes.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "Fan game, written in C. Not affiliated with Dong Nguyen.",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/FlappyBird.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/fan-flappybird.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 65536,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-fridaynightfunkin",
+      "name": "Friday Night Funkin'",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Fan games",
+      "description": "Unofficial fan game. Rap battles: hit the arrows to the beat.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "Fan game after the game's open source code (Apache-2.0). Not affiliated with the Funkin' Crew.",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/FridayNightFunkin.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/fan-fridaynightfunkin.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 1703936,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-hillclimbracing",
+      "name": "Hill Climb Racing",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Fan games",
+      "description": "Unofficial fan game. Drive up hills without flipping or running out of fuel, on Box2D.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "Fan game with the original's pictures; Box2D (zlib). Not affiliated with Fingersoft.",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/HillClimbRacing.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/fan-hillclimbracing.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 1376256,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-hollowknight",
+      "name": "Hollow Knight",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Fan games",
+      "description": "Unofficial fan game. Explore Hallownest with nail and spells.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "Fan game with the original's pictures, maps and texts. Not affiliated with Team Cherry.",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/HollowKnight.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/fan-hollowknight.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 2031616,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-jetpackjoyride",
+      "name": "Jetpack Joyride",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Fan games",
+      "description": "Unofficial fan game. Fly through the lab dodging zappers and missiles.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "Fan game with the original's pictures. Not affiliated with Halfbrick.",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/JetpackJoyride.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/fan-jetpackjoyride.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 655360,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-kingdomrush",
+      "name": "Kingdom Rush",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Fan games",
+      "description": "Unofficial fan game. Tower defense: build towers, stop the waves, with heroes.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "Fan game from the original's Flash files. Not affiliated with Ironhide or Armor Games.",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/KingdomRush.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/fan-kingdomrush.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 1507328,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-leveldevil",
+      "name": "Level Devil",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Fan games",
+      "description": "Unofficial fan game. 80 rooms where the floor, spikes and doors trick you.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "Fan game with the original's rooms and sprites. Not affiliated with Unept.",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/LevelDevil.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/fan-leveldevil.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 131072,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-monkeymart",
+      "name": "Monkey Mart",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Fan games",
+      "description": "Unofficial fan game. Run a supermarket full of monkeys: grow, stock, sell.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "Fan game with the original's pictures. Not affiliated with TinyDobbins.",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/MonkeyMart.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/fan-monkeymart.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 655360,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-motox3m",
+      "name": "Moto X3M",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Fan games",
+      "description": "Unofficial fan game. 50 stunt bike levels with flips and traps, on Nape physics.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "Fan game with the original's pictures; Nape (BSD). Not affiliated with Madpuffers.",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/MotoX3M.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/fan-motox3m.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 1900544,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-mrbullet",
+      "name": "Mr Bullet",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Fan games",
+      "description": "Unofficial fan game. Spy puzzles: one shot, ricochets, grenades and hostages.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "Fan game with the original's pictures; Box2D (zlib). Not affiliated with Lion Studios.",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/MrBullet.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/fan-mrbullet.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 458752,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-numblocks",
+      "name": "NumBlocks",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Fan games",
+      "description": "Unofficial fan game. Minecraft 1.8.8 on the calculator: mine, craft and build in 3D.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "Fan game with Minecraft's blocks, textures and screens. Not affiliated with Mojang or Microsoft.",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/NumBlocks.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/fan-numblocks.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 589824,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-numdash",
+      "name": "NumDash",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Fan games",
+      "description": "Unofficial fan game. Geometry Dash: twelve of the real levels, from Stereo Madness to Clubstep.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "Fan game with Geometry Dash's levels. Not affiliated with RobTop Games.",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/NumDash.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/fan-numdash.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 524288,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-pacman",
+      "name": "Pac-Man",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Fan games",
+      "description": "Unofficial fan game. Eat the dots, dodge the ghosts.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "Fan game, written in C. Not affiliated with Bandai Namco.",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/PacMan.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/fan-pacman.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 65536,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-plantsvszombies",
+      "name": "Plants vs. Zombies",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Fan games",
+      "description": "Unofficial fan game. Plant your lawn's defenses against waves of zombies.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "Fan game with the original's pictures. Not affiliated with PopCap or EA.",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/PlantsVsZombies.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/fan-plantsvszombies.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 1769472,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-polytrack",
+      "name": "PolyTrack",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Fan games",
+      "description": "Unofficial fan game. Low-poly racing on the game's 17 tracks, in 3D.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "Fan game with the original's tracks and models; 3D engine from Boris-TH's PolyGT 3D. Not affiliated with Kodub.",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/PolyTrack.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/fan-polytrack.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 1310720,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-portalreturns",
+      "name": "Portal Returns",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Fan games",
+      "description": "Unofficial fan game. Portal puzzles in 2D, ported from the TI-84 Plus CE.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "By MateoConLechuga, sprites by CKH4. Not affiliated with Valve.",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/PortalReturns.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/fan-portalreturns.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 65536,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-rider",
+      "name": "Rider",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Fan games",
+      "description": "Unofficial fan game. Flip a neon bike along the game's own tracks.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "Fan game with the original's levels; LiquidFun (zlib). Not affiliated with Ketchapp.",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/Rider.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/fan-rider.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 393216,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-snowrider3d",
+      "name": "Snow Rider 3D",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Fan games",
+      "description": "Unofficial fan game. Sled down the slope dodging trees and snowmen, in 3D.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "Fan game with the original's models; brought to NumPlay by dennisimoo.",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/SnowRider3D.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/fan-snowrider3d.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 458752,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-sonicthehedgehog",
+      "name": "Sonic the Hedgehog",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Fan games",
+      "description": "Unofficial fan game. Run, roll and loop through the Mega Drive game's zones.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "Fan game from the Sonic Retro disassembly. Not affiliated with SEGA.",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/SonicTheHedgehog.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/fan-sonicthehedgehog.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 917504,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-spaceinvaders",
+      "name": "Space Invaders",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Fan games",
+      "description": "Unofficial fan game. Shoot down the descending invaders before they land.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "Fan game after the arcade, pictures redrawn. Not affiliated with Taito.",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/SpaceInvaders.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/fan-spaceinvaders.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 65536,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-stickmanhook",
+      "name": "Stickman Hook",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Fan games",
+      "description": "Unofficial fan game. Swing from hook to hook to the finish.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "Fan game with the original's pictures and levels. Not affiliated with Madbox.",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/StickmanHook.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/fan-stickmanhook.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 196608,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-subwaysurfers",
+      "name": "Subway Surfers",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Fan games",
+      "description": "Unofficial fan game. Run the tracks, dodge trains, grab coins.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "Fan game with the original's models and icons. Not affiliated with SYBO or Kiloo.",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/SubwaySurfers.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/fan-subwaysurfers.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 1703936,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-templerun",
+      "name": "Temple Run",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Fan games",
+      "description": "Unofficial fan game. Run from the demon monkeys: turn, jump, slide.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "Fan game with the original's models and pictures. Not affiliated with Imangi Studios.",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/TempleRun.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/fan-templerun.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 1835008,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-tetris",
+      "name": "Tetris",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Fan games",
+      "description": "Unofficial fan game. Falling blocks: complete lines, don't top out.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "Tatone26's version (public domain), adapted for NumPlay. Not affiliated with The Tetris Company.",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/Tetris.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/fan-tetris.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 65536,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-tombofthemask",
+      "name": "Tomb of the Mask",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Fan games",
+      "description": "Unofficial fan game. Dash through the tomb's mazes before the rising flood.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "Fan game with the original's stages and pictures. Not affiliated with Playgendary.",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/TombOfTheMask.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/fan-tombofthemask.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 262144,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-undertale",
+      "name": "Undertale",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Fan games",
+      "description": "Unofficial fan game. Fall into the Underground, where nobody has to die.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "Fan game with the original's maps, pictures and texts. Not affiliated with Toby Fox.",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/Undertale.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/fan-undertale.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 1703936,
+          "data": null
+        }
+      ]
+    },
+    {
+      "id": "numplay-universalpaperclips",
+      "name": "Universal Paperclips",
+      "version": "1.24.15",
+      "author": "Mason363 (NumPlay)",
+      "category": "Fan games",
+      "description": "Unofficial fan game. Make paperclips. Then make more. The whole incremental game.",
+      "defaultVariant": "default",
+      "license": "GPL-3.0",
+      "homepage": "https://github.com/Mason363/NumPlay",
+      "credit": "Fan game with the original's rules and texts. Not affiliated with Frank Lantz or Everybody House Games.",
+      "nwa": "https://github.com/Mason363/NumPlay/releases/download/v1.24.15/UniversalPaperclips.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/NumPlay/icons/fan-universalpaperclips.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 131072,
+          "data": null
+        }
+      ]
     }
   ]
 }
