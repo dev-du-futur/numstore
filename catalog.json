@@ -61,6 +61,26 @@
       ]
     },
     {
+      "id": "rollmark",
+      "name": "Rollmark",
+      "version": "1.0.0",
+      "author": "dev-du-futur",
+      "category": "Games",
+      "description": "Roll numbers and read their luck. Each roll can grow digits, turn negative or get decimals; its patterns earn badges worth EP, and its total sets a tier from Trash to Transcendent. Spend EP at Glim's shop on luck and rarity potions and number items. Bulk rolls, a badge book, records, saved progress. Inspired by RNGidle.",
+      "defaultVariant": "default",
+      "nwa": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/Rollmark/dist/rollmark.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/Rollmark/src/icon.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 196608,
+          "data": null
+        }
+      ]
+    },
+    {
       "id": "tinychat",
       "name": "TinyChat",
       "version": "1.3.0",
