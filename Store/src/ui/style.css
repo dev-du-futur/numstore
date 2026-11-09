@@ -123,6 +123,11 @@ main { flex: 1; overflow: auto; padding: 16px 24px 24px; }
 .empty b { color: var(--ink); display: block; font-size: 15px; margin-bottom: 6px; }
 .list .empty { border: 0; }
 .note { color: var(--grey); font-size: 12px; margin-top: 16px; }
+.restore { display: flex; gap: 16px; align-items: center; background: #fff6e5; border: 1px solid #f5d79c; border-radius: 8px; padding: 14px 16px; margin-bottom: 16px; font-size: 13px; }
+.restore .title { font-size: 15px; }
+.restore p { margin: 6px 0 0; }
+.restore .grow { flex: 1; }
+.restore button { flex: none; }
 
 /* dialogs: a small "screen" with the orange bar */
 .modal { position: fixed; inset: 0; background: #2b2d3366; display: grid; place-items: center; z-index: 10; }

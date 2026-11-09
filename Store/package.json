@@ -1,7 +1,7 @@
 {
   "name": "numstore",
   "productName": "Numstore",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "Install and remove apps on your NumWorks calculator",
   "main": "src/main.js",
   "author": "Awe",

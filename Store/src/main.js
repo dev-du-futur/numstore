@@ -28,6 +28,48 @@ function saveSettings() { try { fs.writeFileSync(settingsFile(), JSON.stringify(
 // "Extend memory" (experimental, see device.js): on when the user turned it on and this
 // calculator allows it; then apps may use the spare system copy too
 const extendOn = () => !!settings.extendMemory && !!calc.extendable;
+
+// ---- the last apps seen on each calculator (settings.lastApps[serial]) -------------
+// NumWorks deletes every app when the calculator resets (reset button, or an app that
+// crashes), so Numstore remembers what was there and offers to put it all back.
+const calcKey = () => calc.serial || calc.model || "calculator";
+function rememberApps() {
+  if (!calc.connected || calc.error || !(calc.apps || []).length) return;
+  // the size too: the online catalog (NumPlay's games...) may not be loaded yet at the first
+  // scan, so the size variant is worked out again when reinstalling
+  const apps = catalog.all();
+  const list = calc.apps.map((a) => {
+    const c = apps.find((x) => x.name === a.name);
+    return { name: a.name, size: a.size, variant: c ? variantFor(c, a.size) : null };
+  });
+  const old = (settings.lastApps || {})[calcKey()];
+  if (old && JSON.stringify(old.apps) === JSON.stringify(list)) return;
+  settings.lastApps = { ...(settings.lastApps || {}), [calcKey()]: { apps: list, at: Date.now() } };
+  saveSettings();
+}
+function forgetApps() {
+  if (!settings.lastApps || !settings.lastApps[calcKey()]) return;
+  delete settings.lastApps[calcKey()];
+  saveSettings();
+}
+// what can be put back on an empty calculator: apps from Numstore only
+function restorable() {
+  if (!calc.connected || calc.error || (calc.apps || []).length) return null;
+  const saved = (settings.lastApps || {})[calcKey()];
+  if (!saved || !saved.apps.length) return null;
+  const apps = catalog.all();
+  const target = [], missing = [];
+  for (const t of saved.apps) {
+    const c = apps.find((x) => x.name === t.name);
+    const variant = c && (t.variant || (t.size ? variantFor(c, t.size) : null));
+    if (variant) target.push({ name: t.name, variant });
+    else missing.push(t.name);
+  }
+  return {
+    target, missing,
+    at: saved.at,
+  };
+}
 // apps already in the spare copy (installed extended before) count against the bigger space
 const appsTotal = () => (extendOn() || (calc.extendable && calc.extendedInUse) ? calc.extTotal : calc.total);
 
@@ -55,6 +97,7 @@ function state() {
                     normal: calc.total, extended: calc.extTotal || 0, inUse: !!calc.extendedInUse } }
       : { connected: false, error: calc.error, restarted: Date.now() - lastWrite < 180000 },
     installed,
+    restore: restorable(),
     catalog: apps.map((a) => {
       const inst = installed.find((i) => i.name === a.name);
       return {
@@ -85,6 +128,7 @@ function rescan() {
     try {
       const r = await device.scan();
       calc = r.connected ? r : { connected: false };
+      rememberApps();
     } catch (e) {
       calc = { connected: !!device.findDevice(), apps: [], error: friendly(e) };
       if (calc.connected) calc = { ...calc, model: "?", used: 0, total: 0 };
@@ -218,6 +262,7 @@ async function apply(target, label) {
     if (files.length === 0) {
       step("Removing the app…");
       await device.removeAll();
+      forgetApps(); // the user emptied it on purpose: nothing to offer back
     } else {
       await installer.install(files, step, { extend });
     }
@@ -243,7 +288,10 @@ ipcMain.handle("plan", (_e, { action, id, variant, name }) => {
     return { name: a.name, variant: c ? variantFor(c, a.size) : null, known: !!c };
   });
   let target;
-  if (action === "install") {
+  if (action === "restore") {
+    const r = restorable();
+    target = r ? r.target.map((t) => ({ ...t, known: true })) : [];
+  } else if (action === "install") {
     const a = apps.find((x) => x.id === id);
     const v = variant || a.defaultVariant || a.variants[0].id;
     const at = current.findIndex((t) => t.name === a.name);
@@ -259,8 +307,9 @@ ipcMain.handle("plan", (_e, { action, id, variant, name }) => {
   const size = kept.reduce((s, t) => s + sizeIn(apps, t), 0);
   const problem = extendOn() ? extendProblem(apps, kept, calc.total, calc.extTotal) : null;
   const total = appsTotal() || 0;
-  const fix = action === "install" && (problem || size > total)
-    ? findFit(apps, kept, apps.find((x) => x.id === id).name, { extend: extendOn(), normal: calc.total, ext: calc.extTotal, total })
+  const keep = action === "install" ? apps.find((x) => x.id === id).name : null; // restore: any app may go
+  const fix = action !== "remove" && (problem || size > total)
+    ? findFit(apps, kept, keep, { extend: extendOn(), normal: calc.total, ext: calc.extTotal, total })
     : null;
   return { target: kept, lost, size, total, extended: extendOn(), normal: calc.total || 0, problem, fix };
 });

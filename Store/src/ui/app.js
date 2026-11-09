@@ -328,9 +328,45 @@ function hoverPreview(el, p) {
   el.addEventListener("mouseleave", () => { preview = null; renderStorage(); });
 }
 
+// the calculator is empty but had apps before (it was reset, maybe by a crash): offer them back
+const names = (list) => list.length < 2 ? list.join("") : list.slice(0, -1).join(", ") + " and " + list[list.length - 1];
+function renderRestore() {
+  const box = $("#restore");
+  const r = S.restore;
+  box.classList.toggle("hidden", !r || S.busy);
+  if (!r) { box.innerHTML = ""; return; }
+  const n = r.target.length;
+  const when = new Date(r.at).toLocaleDateString(undefined, { day: "numeric", month: "long" });
+  box.innerHTML = `<div class="grow"><b class="title">Your apps are gone</b>
+    <p>On ${esc(when)} this calculator had ${n ? names(r.target.map((t) => `<b>${esc(t.name)}</b>`)) : "apps"}${r.missing.length && n ? ", plus " + names(r.missing.map(esc)) : ""}.
+    NumWorks deletes every app when the calculator resets: the reset button on the back, or an app that crashes.</p>
+    ${r.missing.length ? `<p class="hint">${names(r.missing.map((m) => `<b>${esc(m)}</b>`))} ${r.missing.length > 1 ? "weren't" : "wasn't"} installed from Numstore: add ${r.missing.length > 1 ? "their" : "its"} .nwa file again to get ${r.missing.length > 1 ? "them" : "it"} back.</p>` : ""}</div>`;
+  if (!n) return;
+  const b = document.createElement("button");
+  b.className = "key orange";
+  b.textContent = n > 1 ? `Reinstall these ${n} apps` : `Reinstall ${r.target[0].name}`;
+  b.onclick = askRestore;
+  box.appendChild(b);
+}
+
+async function askRestore() {
+  const plan = await window.store.plan({ action: "restore" });
+  if (!plan.target.length) return;
+  const list = names(plan.target.map((t) => `<b>${esc(t.name)}</b>`));
+  if (fits(plan)) {
+    if (await modal("Reinstall your apps", planHtml(plan, `${list} will be installed again, in the same sizes as before.`), "Reinstall", false, true))
+      run(plan.target, "Reinstalling your apps");
+  } else if (plan.fix) {
+    if (await modal("Reinstall your apps", planHtml(plan, `${list} don't all fit any more (Extend memory may have been turned off since).`), `${fixWords(plan.fix)} and reinstall`, !!plan.fix.removed.length, true))
+      run(plan.fix.target, "Reinstalling your apps");
+  } else {
+    await modal("Reinstall your apps", planHtml(plan, `${list} don't fit on the calculator together any more.`), "Reinstall", false, true);
+  }
+}
+
 function render() {
   if (!S) return;
-  renderCalc(); renderStorage(); renderStore(); renderDevice();
+  renderCalc(); renderStorage(); renderRestore(); renderStore(); renderDevice();
   $("#view-store").classList.toggle("hidden", tab !== "store");
   $("#view-device").classList.toggle("hidden", tab !== "device");
   const note = $("#online-note");
@@ -499,7 +535,7 @@ window.store.on("progress", (p) => {
 });
 window.store.on("done", (d) => {
   $("#busy").classList.add("hidden");
-  if (d.ok) toast(`${d.label.replace(/^Installing/, "Installed").replace(/^Removing/, "Removed").replace(/^Switching/, "Switched")} . The calculator restarts: plug it back in to see the change.`, "ok");
+  if (d.ok) toast(`${d.label.replace(/^Reinstalling/, "Reinstalled").replace(/^Installing/, "Installed").replace(/^Removing/, "Removed").replace(/^Switching/, "Switched")} . The calculator restarts: plug it back in to see the change.`, "ok");
   else toast(`${d.label} failed: ${d.error}`, "bad");
 });
 window.store.state().then((s) => { S = s; render(); });
