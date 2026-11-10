@@ -6,8 +6,9 @@ const installer = require("./installer");
 const nwi = require("./nwi");
 const { Catalog, variantFor } = require("./catalog");
 const updater = require("./updater");
+const { Progress, appFor } = require("./files");
 
-let win, catalog, updates;
+let win, catalog, updates, progress;
 let calc = { connected: false };
 let busy = false;      // an install is running: don't touch USB
 let scanTimer = null;
@@ -77,6 +78,64 @@ function iconData(p) {
   try { return "data:image/png;base64," + fs.readFileSync(p).toString("base64"); } catch (e) { return null; }
 }
 
+// ---- game progress (files.js): kept on this PC across installs, resets and removals ----
+// settings.pendingRestore[calc] = names of apps whose files go back once the calculator
+// is seen again after an install (it restarts, and may need plugging back in)
+let calcFiles = null;    // the last file list read: { key, used, size, apps: { name: bytes }, other: bytes }
+let progressNote = null; // { kind: "restored" | "full" | "error", apps, text } for the window
+const appsOf = (names) => [...new Set(names)].filter(Boolean);
+async function keepProgress() {
+  const st = await device.readFiles();
+  const key = st.serial || calcKey();
+  // the store's apps, and those on the calculator that it doesn't know (installed by hand)
+  const apps = [...catalog.all()];
+  for (const a of calc.apps || []) if (!apps.some((x) => x.name === a.name)) apps.push({ name: a.name });
+  progress.keep(key, st.records, apps);
+  // what takes the calculator's file space: each game's saves, and the rest (scripts...)
+  calcFiles = { key, used: st.used, size: st.size, apps: {}, other: 0 };
+  for (const r of st.records) {
+    const bytes = 3 + Buffer.byteLength(r.name, "latin1") + r.data.length;
+    const app = appFor(r.name, apps);
+    if (app) calcFiles.apps[app] = (calcFiles.apps[app] || 0) + bytes;
+    else calcFiles.other += bytes;
+  }
+  return { key, st };
+}
+async function restoreProgress() {
+  const key = calcKey();
+  const pending = (settings.pendingRestore || {})[key];
+  if (!pending) return;
+  try {
+    const st = await device.readFiles();
+    const installed = (calc.apps || []).map((a) => a.name);
+    const want = progress.wanted(key, st.records, installed);
+    const r = want.length ? await device.addFiles(want) : { added: [], left: [] };
+    const app = (n) => want.find((w) => w.name === n)?.app;
+    progress.mark(key, r.added, false);
+    progress.mark(key, r.left, true);
+    delete settings.pendingRestore[key];
+    saveSettings();
+    if (r.left.length)
+      progressNote = { kind: "full", apps: appsOf(r.left.map(app)), text: "The calculator's file storage is full: delete some Python scripts or saves on it, then plug it in again." };
+    else if (r.added.length) progressNote = { kind: "restored", apps: appsOf(r.added.map(app)) };
+    if (r.left.length) { settings.pendingRestore[key] = true; saveSettings(); }
+  } catch (e) {
+    progressNote = { kind: "error", text: friendly(e) };
+  }
+}
+function progressState() {
+  if (!progress) return null;
+  const key = calc.connected ? calcKey() : null;
+  const kept = key ? progress.byApp(key) : {};
+  const files = calcFiles && calcFiles.key === key ? calcFiles : null;
+  return {
+    kept, // { app: { files, size, savedAt } }
+    files, // the calculator's file space, or null
+    pending: !!(key && (settings.pendingRestore || {})[key]) || (!calc.connected && !!Object.keys(settings.pendingRestore || {}).length),
+    note: progressNote,
+  };
+}
+
 // ---- state sent to the window -------------------------------------------------
 function state() {
   const apps = catalog.all();
@@ -98,6 +157,7 @@ function state() {
       : { connected: false, error: calc.error, restarted: Date.now() - lastWrite < 180000 },
     installed,
     restore: restorable(),
+    progress: progressState(),
     catalog: apps.map((a) => {
       const inst = installed.find((i) => i.name === a.name);
       return {
@@ -129,6 +189,13 @@ function rescan() {
       const r = await device.scan();
       calc = r.connected ? r : { connected: false };
       rememberApps();
+      if (calc.connected && !calc.error) {
+        if ((settings.pendingRestore || {})[calcKey()]) await restoreProgress();
+        try {
+          const { key, st } = await keepProgress();
+          if (!(settings.pendingRestore || {})[key]) progress.prune(key, st.records, (calc.apps || []).map((a) => a.name));
+        } catch (e) { /* the file list can't be read: progress is simply not kept */ }
+      }
     } catch (e) {
       calc = { connected: !!device.findDevice(), apps: [], error: friendly(e) };
       if (calc.connected) calc = { ...calc, model: "?", used: 0, total: 0 };
@@ -195,7 +262,7 @@ function findFit(apps, target, keep, room) {
   const choices = target.map((t) => {
     const a = apps.find((x) => x.name === t.name);
     const vs = a ? a.variants.map((v) => v.id) : [t.variant];
-    return [t.variant, ...vs.filter((v) => v !== t.variant), ...(t.name === keep ? [] : [null])];
+    return [t.variant, ...vs.filter((v) => v !== t.variant), ...([].concat(keep || []).includes(t.name) ? [] : [null])];
   });
   if (choices.reduce((n, c) => n * c.length, 1) > 50000) return null;
   let best = null;
@@ -259,6 +326,12 @@ async function apply(target, label) {
       const problem = extend && extendProblem(apps, target, fresh.total, fresh.extTotal);
       if (problem) throw new Error(problem.text);
     }
+    // games' saves first: the install empties the calculator's file list
+    step("Saving your games' progress…");
+    try { await keepProgress(); } catch (e) { /* not readable: nothing to keep */ }
+    settings.pendingRestore = { ...(settings.pendingRestore || {}), [calcKey()]: true };
+    saveSettings();
+    progressNote = null;
     if (files.length === 0) {
       step("Removing the app…");
       await device.removeAll();
@@ -280,7 +353,7 @@ async function apply(target, label) {
 ipcMain.handle("state", () => state());
 ipcMain.handle("rescan", () => rescan());
 
-ipcMain.handle("plan", (_e, { action, id, variant, name }) => {
+ipcMain.handle("plan", (_e, { action, id, variant, name, add, remove }) => {
   // what would happen: apps after the change, apps that would be lost, space used
   const apps = catalog.all();
   const current = (calc.apps || []).map((a) => {
@@ -291,6 +364,17 @@ ipcMain.handle("plan", (_e, { action, id, variant, name }) => {
   if (action === "restore") {
     const r = restorable();
     target = r ? r.target.map((t) => ({ ...t, known: true })) : [];
+  } else if (action === "batch") {
+    // the basket: every change at once (one write, one restart). add: [{ id, variant }], remove: [names]
+    target = current.filter((t) => !(remove || []).includes(t.name));
+    for (const x of add || []) {
+      const a = apps.find((c) => c.id === x.id);
+      if (!a) continue;
+      const v = x.variant || a.defaultVariant || a.variants[0].id;
+      const at = target.findIndex((t) => t.name === a.name);
+      if (at >= 0) target[at] = { name: a.name, variant: v, known: true };
+      else target.push({ name: a.name, variant: v, known: true });
+    }
   } else if (action === "install") {
     const a = apps.find((x) => x.id === id);
     const v = variant || a.defaultVariant || a.variants[0].id;
@@ -307,7 +391,9 @@ ipcMain.handle("plan", (_e, { action, id, variant, name }) => {
   const size = kept.reduce((s, t) => s + sizeIn(apps, t), 0);
   const problem = extendOn() ? extendProblem(apps, kept, calc.total, calc.extTotal) : null;
   const total = appsTotal() || 0;
-  const keep = action === "install" ? apps.find((x) => x.id === id).name : null; // restore: any app may go
+  // never offered for removal: the app being installed, or the basket's apps (restore: any may go)
+  const keep = action === "install" ? apps.find((x) => x.id === id).name
+    : action === "batch" ? (add || []).map((x) => apps.find((c) => c.id === x.id)?.name).filter(Boolean) : null;
   const fix = action !== "remove" && (problem || size > total)
     ? findFit(apps, kept, keep, { extend: extendOn(), normal: calc.total, ext: calc.extTotal, total })
     : null;
@@ -362,6 +448,8 @@ ipcMain.handle("add-file", async () => {
 ipcMain.handle("restart-update", () => updates.restart());
 ipcMain.handle("version", () => app.getVersion());
 ipcMain.handle("forget", (_e, id) => { catalog.forget(id); push(); });
+ipcMain.handle("forget-progress", (_e, appName) => { if (calc.connected) progress.forget(calcKey(), appName); push(); });
+ipcMain.handle("dismiss-progress-note", () => { progressNote = null; push(); });
 ipcMain.handle("open", (_e, url) => { if (/^https:\/\//.test(url)) shell.openExternal(url); });
 
 // ---- window -------------------------------------------------------------------
@@ -397,6 +485,7 @@ app.whenReady().then(async () => {
   installer.setDataDir(app.getPath("userData"));
   loadSettings();
   catalog = new Catalog(bundledDir, app.getPath("userData"));
+  progress = new Progress(path.join(app.getPath("userData"), "progress"));
   createWindow();
   updates = updater.start({ send, isBusy: () => busy });
   device.watch(() => scheduleScan(1200));

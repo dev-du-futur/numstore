@@ -28,13 +28,20 @@
   <section class="storage" id="storage">
     <div class="storage-head">
       <h2>Storage</h2>
-      <span class="storage-right">
-        <span id="storage-text">Connect your calculator to see its storage</span>
-        <button class="key small hidden" id="extend-btn"></button>
-      </span>
+      <button class="key small hidden" id="extend-btn"></button>
     </div>
-    <div class="bar" id="bar"></div>
+    <div class="srow">
+      <span class="slabel" title="Flash memory for apps">Apps</span>
+      <div class="bar" id="bar"></div>
+      <span class="stext" id="storage-text">Connect your calculator to see its storage</span>
+    </div>
     <div class="legend" id="legend"></div>
+    <div class="srow hidden" id="files-row">
+      <span class="slabel" title="The calculator's file list: games' saves, Python scripts">Files</span>
+      <div class="bar thin" id="fbar"></div>
+      <span class="stext" id="ftext"></span>
+    </div>
+    <div class="legend" id="flegend"></div>
   </section>
 
   <nav class="toolbar">
@@ -51,11 +58,15 @@
 
   <main>
     <div id="restore" class="restore hidden"></div>
+    <div id="progress-note" class="restore hidden"></div>
     <div id="view-store" class="grid"></div>
     <div id="view-device" class="list hidden"></div>
     <p id="online-note" class="note hidden"></p>
     <p id="version" class="note"></p>
   </main>
+
+  <!-- the basket: changes waiting to be applied together (one write, one restart) -->
+  <div id="basket" class="basket hidden"></div>
 
   <div id="modal" class="modal hidden" role="dialog" aria-modal="true">
     <div class="sheet">

@@ -1,6 +1,7 @@
-// Reads a NumWorks calculator over USB (DFU, read-only): model, firmware version,
-// the external-apps flash region and the apps installed in it.
-// Writing is left to NumWorks' own nwlink tool (see installer.js).
+// Reads a NumWorks calculator over USB (DFU): model, firmware version, the external-apps
+// flash region and the apps installed in it, and its file list (games' saves, in RAM).
+// Writing apps is left to NumWorks' own nwlink tool (see installer.js); Numstore only
+// writes files back into the file list (addFiles).
 const { usb, getDeviceList } = require("usb");
 
 const VID = 0x0483;
@@ -280,13 +281,77 @@ async function removeAll() {
   }
 }
 
+// DfuSe write (RAM only here): set the address pointer, then DNLOAD blocks 2, 3, ...
+Calculator.prototype.write = async function (addr, data) {
+  await this.selectFor(addr);
+  await this.abort();
+  await this.dfuse(0x21, addr);
+  const ts = this.transferSize;
+  for (let off = 0, block = 2; off < data.length; off += ts, block++) {
+    await ctrl(this.dev, false, DFU_DNLOAD, block, this.ifaceNum, data.subarray(off, off + ts));
+    await this.status(); // executes the write
+    await this.waitIdle();
+  }
+  await this.abort();
+};
+
+// The calculator's file list (see files.js): its records, used space and size.
+async function withCalc(fn) {
+  const dev = findDevice();
+  if (!dev) throw new Error("Calculator not connected");
+  const c = new Calculator(dev);
+  try {
+    await c.open();
+    return await fn(c, await c.info());
+  } finally {
+    await c.close();
+  }
+}
+async function readStorage(c, info) {
+  const files = require("./files");
+  const buf = await c.read(info.storageAddress, info.storageSize + 8);
+  return { serial: c.serial, ...files.parse(buf, info.storageSize), size: info.storageSize };
+}
+function readFiles() { return withCalc(readStorage); }
+
+// Adds records at the end of the list (nothing already there moves or changes). Those that
+// don't fit are left out: -> { added: [names], left: [names] }
+function addFiles(records) {
+  const files = require("./files");
+  return withCalc(async (c, info) => {
+    const st = await readStorage(c, info);
+    const have = new Set(st.records.map((r) => r.name));
+    const todo = records.filter((r) => !have.has(r.name));
+    const added = [], left = [];
+    let end = st.end;
+    for (const r of todo) { // one by one: as many as fit
+      const bytes = files.appended([r], end, info.storageSize);
+      if (!bytes) { left.push(r.name); continue; }
+      // the new record first, then its first two bytes (its size): the list stays ended
+      // by a zero size at every moment
+      const at = info.storageAddress + 4 + end;
+      await c.write(at + 2, bytes.subarray(2));
+      await c.write(at, bytes.subarray(0, 2));
+      end += bytes.length - 2;
+      added.push(r.name);
+    }
+    if (added.length) { // check it reads back as written
+      const after = await readStorage(c, info);
+      const got = new Map(after.records.map((r) => [r.name, r.data]));
+      for (const r of todo) if (added.includes(r.name) && !(got.get(r.name) || Buffer.alloc(0)).equals(r.data))
+        throw new Error(`${r.name} didn't read back right`);
+    }
+    return { added, left };
+  });
+}
+
 function watch(cb) {
   usb.on("attach", cb);
   usb.on("detach", cb);
   return () => { usb.off("attach", cb); usb.off("detach", cb); };
 }
 
-module.exports = { scan, watch, removeAll, findDevice, Calculator, APP_SECTOR, EXT_END };
+module.exports = { scan, watch, removeAll, readFiles, addFiles, findDevice, Calculator, APP_SECTOR, EXT_END };
 
 if (require.main === module) {
   scan().then(

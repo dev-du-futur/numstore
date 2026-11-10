@@ -5,6 +5,8 @@ let S = null;            // state from the main process
 let tab = "store";
 const chosen = {};       // app id -> size variant picked on its card
 let preview = null;      // { add: name, size } or { remove: name } while hovering a button
+// name -> { action: "add", id, variant, size, label } or { action: "remove" }: applied together
+const basket = new Map();
 
 const mb = (b) => (b / 1048576).toFixed(b >= 1048576 * 10 ? 0 : 2).replace(/\.?0+$/, "") + " MB";
 const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
@@ -53,6 +55,28 @@ function renderCalc() {
   $("#tb-batt").style.width = ok ? (100 * c.used / c.total) + "%" : "0";
 }
 
+// The apps as they will be after the basket (and the change under the mouse), laid out like
+// main.js does: with extended memory the biggest app goes last, and an app that would start
+// after the line is red (the calculator wouldn't find it); without it, what overflows is red.
+function projected() {
+  let list = S.installed.map((a) => ({ name: a.name, size: a.size }));
+  const changes = [...basket.entries()];
+  if (preview?.add) changes.push([preview.add, { action: "add", size: preview.size }]);
+  else if (preview?.remove) changes.push([preview.remove, { action: "remove" }]);
+  const removed = [];
+  for (const [name, ch] of changes) {
+    if (ch.action === "remove") { if (list.some((a) => a.name === name)) removed.push(name); list = list.filter((a) => a.name !== name); continue; }
+    const i = list.findIndex((a) => a.name === name), e = { name, size: ch.size, isNew: true };
+    if (i >= 0) list[i] = e; else list.push(e);
+  }
+  if (S.calc.extend?.on && list.length > 1) {
+    let big = 0;
+    list.forEach((x, i) => { if (x.size > list[big].size) big = i; });
+    list = [...list.slice(0, big), ...list.slice(big + 1), list[big]];
+  }
+  return { list, removed, changed: changes.length > 0 };
+}
+
 function renderStorage() {
   const bar = $("#bar"), legend = $("#legend"), text = $("#storage-text");
   bar.innerHTML = ""; legend.innerHTML = "";
@@ -63,74 +87,52 @@ function renderStorage() {
     return;
   }
   $("#storage").classList.remove("hidden");
-  if (preview?.add && c.extend?.on) return renderExtendedPreview(c, bar, legend, text);
-  let used = 0;
-  for (const a of S.installed) {
-    const seg = document.createElement("div");
-    seg.className = "seg" + (preview?.remove === a.name ? " leaving" : "");
-    seg.style.width = (100 * a.size / c.total) + "%";
-    seg.style.background = colorFor(a.name);
-    seg.title = `${a.name} · ${mb(a.size)}`;
-    bar.appendChild(seg);
-    used += a.size;
-    legend.insertAdjacentHTML("beforeend", `<span><i style="background:${colorFor(a.name)}"></i>${esc(a.name)} · ${mb(a.size)}</span>`);
-  }
-  let after = used;
-  if (preview?.add) {
-    const seg = document.createElement("div");
-    const old = preview.remove ? S.installed.find((a) => a.name === preview.remove)?.size || 0 : 0;
-    seg.className = "seg preview" + (used - old + preview.size > c.total ? " over" : "");
-    seg.style.width = Math.min(100, 100 * preview.size / c.total) + "%";
-    seg.style.background = colorFor(preview.add);
-    bar.appendChild(seg);
-    after += preview.size;
-  }
-  if (preview?.remove) after -= S.installed.find((a) => a.name === preview.remove)?.size || 0;
-  renderExtend(c, bar);
-  const free = c.total - used;
-  text.innerHTML = preview
-    ? (after > c.total
-        ? `<b style="color:var(--red)">Doesn't fit</b>: needs ${mb(after - c.total)} more`
-        : `After this: <b>${mb(c.total - after)}</b> free of ${mb(c.total)}`)
-    : `<b>${mb(free)}</b> free of ${mb(c.total)}`;
-  legend.insertAdjacentHTML("beforeend", `<span><i style="background:#e4e5e8"></i>Free · ${mb(free)}</span>`);
-}
-
-// With extended memory, show the apps as they would be laid out (biggest last, like
-// main.js extendOrder): an app that would start after the line is red, since the
-// calculator wouldn't find it.
-function renderExtendedPreview(c, bar, legend, text) {
-  const normal = c.extend.normal;
-  let list = S.installed.map((a) => ({ name: a.name, size: a.size }));
-  const at = list.findIndex((a) => a.name === preview.add);
-  if (at >= 0) list[at] = { name: preview.add, size: preview.size, isNew: true };
-  else list.push({ name: preview.add, size: preview.size, isNew: true });
-  if (list.length > 1) {
-    let big = 0;
-    list.forEach((a, i) => { if (a.size > list[big].size) big = i; });
-    list = [...list.slice(0, big), ...list.slice(big + 1), list[big]];
-  }
+  const { list, removed, changed } = projected();
+  const ext = !!c.extend?.on, normal = c.extend?.normal || c.total;
   let start = 0;
   const lost = [];
   for (const a of list) {
-    const seg = document.createElement("div");
-    const late = start >= normal;
+    const late = ext ? start >= normal : start + a.size > c.total;
     if (late) lost.push(a.name);
-    seg.className = "seg" + (a.isNew ? " preview" : "") + (late ? " lost" : "");
+    const seg = document.createElement("div");
+    seg.className = "seg" + (a.isNew ? " preview" : "") + (late ? (ext ? " lost" : " over") : "");
     seg.style.width = Math.max(0, Math.min(100 - 100 * start / c.total, 100 * a.size / c.total)) + "%";
     seg.style.background = colorFor(a.name);
-    seg.title = `${a.name} · ${mb(a.size)}${late ? " · would start after the line: the calculator wouldn't find it" : ""}`;
+    seg.title = `${a.name} · ${mb(a.size)}${late ? (ext ? " · would start after the line: the calculator wouldn't find it" : " · doesn't fit") : ""}`;
     bar.appendChild(seg);
     start += a.size;
-    legend.insertAdjacentHTML("beforeend", `<span><i style="background:${late ? "var(--red)" : colorFor(a.name)}"></i>${esc(a.name)} · ${mb(a.size)}</span>`);
+    legend.insertAdjacentHTML("beforeend", `<span${a.isNew ? ' class="new"' : ""}><i style="background:${late ? "var(--red)" : colorFor(a.name)}"></i>${a.isNew ? "+ " : ""}${esc(a.name)} · ${mb(a.size)}</span>`);
   }
+  for (const n of removed) legend.insertAdjacentHTML("beforeend", `<span class="gone"><i></i>− ${esc(n)}</span>`);
   renderExtend(c, bar);
-  text.innerHTML = start > c.total
-    ? `<b style="color:var(--red)">Doesn't fit</b>: needs ${mb(start - c.total)} more`
-    : lost.length
-      ? `<b style="color:var(--red)">Doesn't fit</b>: ${esc(lost.join(", "))} would start after the line`
-      : `After this: <b>${mb(c.total - start)}</b> free of ${mb(c.total)}`;
-  legend.insertAdjacentHTML("beforeend", `<span><i style="background:#e4e5e8"></i>Free · ${mb(Math.max(0, c.total - start))}</span>`);
+  const free = Math.max(0, c.total - start);
+  text.innerHTML = !changed ? `<b>${mb(free)}</b> free of ${mb(c.total)}`
+    : start > c.total ? `<b style="color:var(--red)">Doesn't fit</b>: needs ${mb(start - c.total)} more`
+    : lost.length ? `<b style="color:var(--red)">Doesn't fit</b>: ${esc(lost.join(", "))} would start after the line`
+    : `After this: <b>${mb(free)}</b> free of ${mb(c.total)}`;
+  legend.insertAdjacentHTML("beforeend", `<span><i style="background:#e4e5e8"></i>Free · ${mb(free)}</span>`);
+  renderFiles();
+}
+
+// the calculator's file space (RAM): each game's saves, then scripts and the rest
+function renderFiles() {
+  const f = S.progress?.files, row = $("#files-row"), bar = $("#fbar"), legend = $("#flegend");
+  row.classList.toggle("hidden", !f); legend.classList.toggle("hidden", !f);
+  bar.innerHTML = ""; legend.innerHTML = "";
+  if (!f) return;
+  const parts = [...Object.entries(f.apps).sort((x, y) => y[1] - x[1]).map(([n, b]) => [`${n} save`, b, colorFor(n)]),
+    ...(f.other ? [["Python scripts and other files", f.other, "#a7b0bd"]] : [])];
+  for (const [label, bytes, color] of parts) {
+    const seg = document.createElement("div");
+    seg.className = "seg";
+    seg.style.width = Math.max(0.6, 100 * bytes / f.size) + "%";
+    seg.style.background = color;
+    seg.title = `${label} · ${kb(bytes)}`;
+    bar.appendChild(seg);
+    legend.insertAdjacentHTML("beforeend", `<span><i style="background:${color}"></i>${esc(label)} · ${kb(bytes)}</span>`);
+  }
+  legend.insertAdjacentHTML("beforeend", `<span><i style="background:#e4e5e8"></i>Free · ${kb(f.size - f.used)}</span>`);
+  $("#ftext").innerHTML = `<b>${kb(f.size - f.used)}</b> free of ${kb(f.size)}`;
 }
 
 // ---- extend memory (experimental: apps may use the calculator's spare system copy) ----
@@ -222,6 +224,8 @@ function renderStore() {
       <div class="meta">${esc([a.category, a.author, a.version && "v" + a.version].filter(Boolean).join(" · "))}</div>
       <p class="desc">${esc(a.description)}</p>`);
     if (a.credit) card.insertAdjacentHTML("beforeend", `<div class="meta">${esc(a.credit)}</div>`);
+    if (kept(a.name) && !a.installed)
+      card.insertAdjacentHTML("beforeend", `<div class="kept" title="Kept on this PC: it goes back on the calculator when you install ${esc(a.name)}">Progress saved · ${esc(day(kept(a.name).savedAt))}</div>`);
     if (a.homepage) { // apps from other projects: where their source and licence are
       const l = document.createElement("button");
       l.className = "link";
@@ -257,18 +261,20 @@ function renderStore() {
       foot.appendChild(f);
     }
     const b = document.createElement("button");
+    const inB = basket.get(a.name);
     if (a.installed && a.installedVariant === v) {
-      b.className = "key"; b.textContent = "Remove";
-      b.onclick = () => askRemove(a.name);
-      hoverPreview(b, { remove: a.name });
-    } else if (a.installed) {
-      b.className = "key orange"; b.textContent = `Switch to ${variant.label}`;
-      b.onclick = () => askInstall(a, v);
-      hoverPreview(b, { add: a.name, size: variant.size, remove: a.name });
+      const marked = inB?.action === "remove";
+      b.className = marked ? "key dark" : "key"; b.textContent = marked ? "✓ Removing" : "Remove";
+      b.title = marked ? "Click to keep it" : "";
+      b.onclick = () => toggleRemove(a.name);
+      if (!marked) hoverPreview(b, { remove: a.name });
     } else {
-      b.className = "key orange"; b.textContent = "Install";
-      b.onclick = () => askInstall(a, v);
-      hoverPreview(b, { add: a.name, size: variant.size });
+      const marked = inB?.action === "add" && inB.variant === v;
+      b.className = marked ? "key dark" : "key orange";
+      b.textContent = marked ? "✓ In the basket" : a.installed ? `Switch to ${variant.label}` : "Install";
+      b.title = marked ? "Click to take it out" : "";
+      b.onclick = () => toggleAdd(a, v);
+      if (!marked) hoverPreview(b, a.installed ? { add: a.name, size: variant.size, remove: a.name } : { add: a.name, size: variant.size });
     }
     b.disabled = !S.calc.connected || !!S.calc.error || S.busy;
     if (b.disabled) b.title = S.calc.connected ? "" : "Connect your calculator first";
@@ -289,6 +295,37 @@ function pickVariant(a) {
   return [...a.variants].sort((x, y) => (x.size || 0) - (y.size || 0))[0].id;
 }
 
+// sizes of files: bytes or KB
+const kb = (b) => b < 1024 ? `${b} B` : `${(b / 1024).toFixed(b < 10240 ? 1 : 0).replace(/.0$/, "")} KB`;
+const ICON_CALC = `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2.5" width="12" height="19" rx="2"/><path d="M9 6.5h6M9 11h.01M12 11h.01M15 11h.01M9 14.5h.01M12 14.5h.01M15 14.5h.01M9 18h6"/></svg>`;
+const ICON_PC = `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="1.5"/><path d="M8 20h8M12 16v4"/></svg>`;
+
+// a game's save: how much of the calculator's file space it takes, and where it is
+function saveCell(name) {
+  const k = kept(name), files = S.progress?.files;
+  const onCalc = files?.apps?.[name] || 0;
+  if (!k && !onCalc) return `<div class="save none">No save</div>`;
+  const bytes = onCalc || k.size;
+  const size = files?.size || 0;
+  const pct = size ? Math.max(2, Math.min(100, 100 * bytes / size)) : 0;
+  const where = (on, icon, short, long) => `<span class="where ${on ? "on" : ""}" title="${on ? "Saved " + long : "Not " + long}">${icon}${short}</span>`;
+  return `<div class="save">
+    <div class="save-top"><span class="save-size">Save · ${kb(bytes)}</span>
+      ${where(!!onCalc, ICON_CALC, "Calculator", "on the calculator")}${where(!!k, ICON_PC, "PC", "on this PC")}</div>
+    ${size ? `<div class="minibar" title="${kb(bytes)} of the calculator's ${kb(size)} for files"><span style="width:${pct}%;background:${colorFor(name)}"></span></div>` : ""}
+    ${k ? `<div class="save-when">Copied ${esc(day(k.savedAt))}</div>` : ""}
+  </div>`;
+}
+
+function deviceRow(v, name, icon, meta, cell, button) {
+  const row = document.createElement("div");
+  row.className = "row";
+  row.appendChild(iconEl(icon, name));
+  row.insertAdjacentHTML("beforeend", `<div class="grow"><h3>${esc(name)}</h3><div class="meta">${meta}</div></div>${cell}`);
+  row.appendChild(button);
+  v.appendChild(row);
+}
+
 function renderDevice() {
   const v = $("#view-device");
   v.innerHTML = "";
@@ -297,24 +334,27 @@ function renderDevice() {
     v.innerHTML = `<div class="empty"><b>No calculator connected</b>Plug your NumWorks into this computer with a USB cable, turn it on, and it will show up here.</div>`;
     return;
   }
-  if (!S.installed.length) {
-    v.innerHTML = `<div class="empty"><b>No apps installed yet</b>Pick one in the Store tab.</div>`;
-    return;
-  }
+  const away = Object.keys(S.progress?.kept || {}).filter((n) => !S.installed.some((a) => a.name === n)).sort();
+  v.insertAdjacentHTML("beforeend", `<div class="list-head"><span>On the calculator</span><span>${S.installed.length} app${S.installed.length === 1 ? "" : "s"}</span></div>`);
+  if (!S.installed.length) v.insertAdjacentHTML("beforeend", `<div class="empty"><b>No apps installed yet</b>Pick one in the Store tab.</div>`);
   for (const a of S.installed) {
-    const row = document.createElement("div");
-    row.className = "row";
-    row.appendChild(iconEl(a.icon || S.catalog.find((c) => c.name === a.name)?.icon, a.name));
     const known = S.catalog.some((c) => c.name === a.name);
-    row.insertAdjacentHTML("beforeend", `<div class="grow"><h3>${esc(a.name)}</h3>
-      <div class="meta">${[variantLabel(a), mb(a.size)].filter(Boolean).join(" · ")}${known ? "" : " · not from Numstore"}</div></div>`);
     const b = document.createElement("button");
-    b.className = "key"; b.textContent = "Remove";
+    const marked = basket.get(a.name)?.action === "remove";
+    b.className = marked ? "key dark" : "key"; b.textContent = marked ? "✓ Removing" : "Remove";
     b.disabled = S.busy;
-    b.onclick = () => askRemove(a.name);
-    hoverPreview(b, { remove: a.name });
-    row.appendChild(b);
-    v.appendChild(row);
+    b.onclick = () => toggleRemove(a.name);
+    if (!marked) hoverPreview(b, { remove: a.name });
+    deviceRow(v, a.name, a.icon || S.catalog.find((c) => c.name === a.name)?.icon,
+      esc([variantLabel(a), mb(a.size), !known && "not from Numstore"].filter(Boolean).join(" · ")), saveCell(a.name), b);
+  }
+  if (!away.length) return;
+  v.insertAdjacentHTML("beforeend", `<div class="list-head"><span>Removed, progress kept on this PC</span><span>goes back when you reinstall</span></div>`);
+  for (const name of away) {
+    const b = document.createElement("button");
+    b.className = "key"; b.textContent = "Delete save";
+    b.onclick = () => askForgetProgress(name);
+    deviceRow(v, name, S.catalog.find((c) => c.name === name)?.icon, "Not installed", saveCell(name), b);
   }
 }
 
@@ -364,9 +404,42 @@ async function askRestore() {
   }
 }
 
+// ---- game progress kept on this PC (main.js, files.js) ------------------------------
+const kept = (name) => S.progress?.kept?.[name] || null;
+const day = (t) => new Date(t).toLocaleDateString(undefined, { day: "numeric", month: "long" });
+function renderProgressNote() {
+  const box = $("#progress-note");
+  const p = S.progress || {};
+  const n = p.note;
+  let html = "";
+  if (n?.kind === "restored")
+    html = `<div class="grow"><b class="title">Your progress is back</b><p>${names(n.apps.map((a) => `<b>${esc(a)}</b>`))}: right where you left off.</p></div>`;
+  else if (n?.kind === "full")
+    html = `<div class="grow"><b class="title">Some progress couldn't go back yet</b><p>${n.apps.length ? names(n.apps.map((a) => `<b>${esc(a)}</b>`)) + ": " : ""}${esc(n.text)} It stays safe on this PC.</p></div>`;
+  else if (n?.kind === "error")
+    html = `<div class="grow"><b class="title">Couldn't put your progress back</b><p>${esc(n.text)} It stays safe on this PC; Numstore tries again next time you plug the calculator in.</p></div>`;
+  else if (p.pending && !S.calc.connected && !S.busy)
+    html = `<div class="grow"><b class="title">Plug your calculator back in</b><p>Numstore puts your games' progress back then. Don't open your games before, or they start a new save.</p></div>`;
+  box.classList.toggle("hidden", !html);
+  box.classList.toggle("good", n?.kind === "restored");
+  box.innerHTML = html;
+  if (n) {
+    const x = document.createElement("button");
+    x.className = "key small"; x.textContent = "OK";
+    x.onclick = () => window.store.dismissProgressNote();
+    box.appendChild(x);
+  }
+}
+
+async function askForgetProgress(name) {
+  const k = kept(name);
+  if (await modal(`Delete ${name}'s progress`, `<p>The progress Numstore keeps for <b>${esc(name)}</b> (saved on ${esc(day(k.savedAt))}) will be deleted from this PC. Next time you install it, it starts from the beginning.</p>`, "Delete progress", true))
+    window.store.forgetProgress(name);
+}
+
 function render() {
   if (!S) return;
-  renderCalc(); renderStorage(); renderRestore(); renderStore(); renderDevice();
+  renderCalc(); renderStorage(); renderRestore(); renderProgressNote(); renderStore(); renderDevice(); renderBasket();
   $("#view-store").classList.toggle("hidden", tab !== "store");
   $("#view-device").classList.toggle("hidden", tab !== "device");
   const note = $("#online-note");
@@ -461,8 +534,62 @@ async function askInstall(a, variant) {
 
 async function askRemove(name) {
   const plan = await window.store.plan({ action: "remove", name });
-  if (await modal(`Remove ${name}`, planHtml(plan, `${esc(name)} will be removed from your calculator. You can install it again any time.`), "Remove", true))
+  const keep = `<p class="hint">Your progress in ${esc(name)} stays on this PC, and goes back on the calculator when you install it again.</p>`;
+  if (await modal(`Remove ${name}`, planHtml(plan, `${esc(name)} will be removed from your calculator. You can install it again any time.`) + keep, "Remove", true))
     run(plan.target, `Removing ${name}`);
+}
+
+// ---- the basket ---------------------------------------------------------------------
+function toggleAdd(a, v) {
+  const cur = basket.get(a.name);
+  const x = a.variants.find((y) => y.id === v);
+  if (cur?.action === "add" && cur.variant === v) basket.delete(a.name);
+  else if (a.installed && a.installedVariant === v) basket.delete(a.name); // back to what's installed
+  else basket.set(a.name, { action: "add", id: a.id, variant: v, size: x.size, label: a.variants.length > 1 ? x.label : "", switching: a.installed });
+  preview = null;
+  render();
+}
+function toggleRemove(name) {
+  if (basket.get(name)?.action === "remove") basket.delete(name);
+  else basket.set(name, { action: "remove" });
+  preview = null;
+  render();
+}
+const basketWords = (name, ch) => ch.action === "remove" ? `Remove ${name}`
+  : ch.switching ? `Switch ${name} to ${ch.label}` : `Install ${name}${ch.label ? ` (${ch.label})` : ""}`;
+
+function renderBasket() {
+  const box = $("#basket");
+  box.classList.toggle("hidden", !basket.size || !S.calc.connected);
+  if (!basket.size) { box.innerHTML = ""; return; }
+  const chips = [...basket].map(([name, ch]) => `<span class="chip ${ch.action}" data-name="${esc(name)}">${ch.action === "remove" ? "−" : ch.switching ? "↔" : "+"} ${esc(name)}${ch.label ? ` <em>${esc(ch.label)}</em>` : ""}<button title="Take it out of the basket" aria-label="Take ${esc(name)} out">×</button></span>`).join("");
+  box.innerHTML = `<div class="basket-main"><b>${basket.size} change${basket.size > 1 ? "s" : ""}</b><span class="hint">applied together: the calculator restarts once</span>
+    <div class="chips">${chips}</div></div>
+    <button class="key" id="basket-clear">Clear</button>
+    <button class="key orange" id="basket-apply">Apply changes</button>`;
+  box.querySelectorAll(".chip button").forEach((x) => x.onclick = () => { basket.delete(x.parentElement.dataset.name); render(); });
+  $("#basket-clear").onclick = () => { basket.clear(); render(); };
+  $("#basket-apply").onclick = applyBasket;
+  $("#basket-apply").disabled = S.busy || !!S.calc.error;
+}
+
+async function applyBasket() {
+  const add = [...basket].filter(([, ch]) => ch.action === "add").map(([, ch]) => ({ id: ch.id, variant: ch.variant }));
+  const remove = [...basket].filter(([, ch]) => ch.action === "remove").map(([name]) => name);
+  const plan = await window.store.plan({ action: "batch", add, remove });
+  const list = `<ul class="changes">${[...basket].map(([n, ch]) => `<li class="${ch.action}">${esc(basketWords(n, ch))}</li>`).join("")}</ul>`;
+  const saved = remove.filter((n) => kept(n) || S.progress?.files?.apps?.[n]);
+  const keep = saved.length ? `<p class="hint">Your progress in ${names(saved.map(esc))} stays on this PC, and goes back on the calculator when you install ${saved.length > 1 ? "them" : "it"} again.</p>` : "";
+  const many = basket.size > 1;
+  const html = (lead) => planHtml(plan, lead).replace("</p>", "</p>" + list);
+  const label = basket.size > 1 ? `Applying ${basket.size} changes` : basketWords(...[...basket][0]).replace(/^Install/, "Installing").replace(/^Remove/, "Removing").replace(/^Switch/, "Switching");
+  if (fits(plan)) {
+    if (await modal("Apply changes", html(`${many ? "These changes are" : "This change is"} made in one go:`) + keep, "Apply", remove.length > 0 && !add.length, true)) run(plan.target, label);
+  } else if (plan.fix) {
+    if (await modal("Doesn't fit", html(`<b>${many ? "These changes don't" : "This change doesn't"} fit</b> with your apps as they are:`), `${fixWords(plan.fix)} and apply`, !!plan.fix.removed.length, true)) run(plan.fix.target, label);
+  } else {
+    await modal("Doesn't fit", html(`<b>${many ? "These changes don't" : "This change doesn't"} fit</b> on your calculator. Take something out of the basket, or add apps to remove:`), "Apply", false, true);
+  }
 }
 
 function run(target, label) {
@@ -535,6 +662,7 @@ window.store.on("progress", (p) => {
 });
 window.store.on("done", (d) => {
   $("#busy").classList.add("hidden");
+  if (d.ok) { basket.clear(); render(); }
   if (d.ok) toast(`${d.label.replace(/^Reinstalling/, "Reinstalled").replace(/^Installing/, "Installed").replace(/^Removing/, "Removed").replace(/^Switching/, "Switched")} . The calculator restarts: plug it back in to see the change.`, "ok");
   else toast(`${d.label} failed: ${d.error}`, "bad");
 });
