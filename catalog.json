@@ -21,6 +21,26 @@
       ]
     },
     {
+      "id": "clock",
+      "name": "Clock",
+      "version": "1.0.0",
+      "author": "dev-du-futur",
+      "category": "Tools",
+      "description": "A big 24-hour clock with the date. The calculator has no clock of its own, so you set the time once and Clock counts on from it, even after you leave and come back. Its timer pauses while the calculator is off, so check the time after turning it on (OK to set, Up/Down for a minute, 0 to round to :00).",
+      "defaultVariant": "default",
+      "nwa": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/Clock/dist/clock.nwa",
+      "icon": "https://raw.githubusercontent.com/dev-du-futur/numstore/main/Apps/Clock/src/icon.png",
+      "variants": [
+        {
+          "id": "default",
+          "label": "",
+          "description": "",
+          "size": 65536,
+          "data": null
+        }
+      ]
+    },
+    {
       "id": "infinite-stacker",
       "name": "Infinite Stacker",
       "version": "1.0.0",

@@ -1,0 +1,4 @@
+output/
+host/out/
+host/clock_test*
+*.exe
