@@ -136,6 +136,11 @@ main { flex: 1; overflow: auto; padding: 16px 24px 24px; }
   border: 1px dashed #cfd0d4; color: #a3a6ad; }
 .where svg { width: 12px; height: 12px; }
 .where.on { border: 1px solid #b9dcb9; background: #eef6ee; color: #2f7a3a; }
+/* a removed app's save: click a place to delete it from there */
+.where.del { cursor: pointer; padding-right: 4px; }
+.where.del b { display: grid; place-items: center; width: 14px; height: 14px; border-radius: 50%; font-size: 12px; line-height: 1; font-weight: 600; opacity: .55; }
+.where.del:hover { border-color: #e2a3a3; background: #fbeeee; color: var(--red); }
+.where.del:hover b { opacity: 1; background: #f3d3d3; }
 .minibar { height: 6px; background: #e4e5e8; border-radius: 3px; overflow: hidden; }
 .minibar span { display: block; height: 100%; border-radius: 3px; }
 .save-when { font-size: 11px; color: var(--grey); }

@@ -448,7 +448,30 @@ ipcMain.handle("add-file", async () => {
 ipcMain.handle("restart-update", () => updates.restart());
 ipcMain.handle("version", () => app.getVersion());
 ipcMain.handle("forget", (_e, id) => { catalog.forget(id); push(); });
-ipcMain.handle("forget-progress", (_e, appName) => { if (calc.connected) progress.forget(calcKey(), appName); push(); });
+// a save: off this PC (it stays on the calculator, and isn't copied again unless it
+// changes), or off the calculator (the PC copy stays)
+const appsKnown = () => { const apps = [...catalog.all()]; for (const a of calc.apps || []) if (!apps.some((x) => x.name === a.name)) apps.push({ name: a.name }); return apps; };
+ipcMain.handle("forget-progress", async (_e, appName) => {
+  if (!calc.connected || busy) return;
+  let onCalc = [];
+  try { onCalc = (await device.readFiles()).records.filter((r) => appFor(r.name, appsKnown()) === appName); } catch (e) {}
+  progress.forget(calcKey(), appName, onCalc);
+  push();
+});
+ipcMain.handle("remove-save", async (_e, appName) => {
+  if (!calc.connected || busy) return { ok: false, error: "Numstore is busy" };
+  if ((calc.apps || []).some((a) => a.name === appName)) return { ok: false, error: `${appName} is on the calculator` };
+  busy = true; push();
+  try {
+    await keepProgress(); // a last copy first (unless it was deleted from this PC)
+    const names = (await device.readFiles()).records.filter((r) => appFor(r.name, appsKnown()) === appName).map((r) => r.name);
+    const r = await device.removeFiles(names);
+    await keepProgress();
+    return { ok: true, removed: r.removed };
+  } catch (e) {
+    return { ok: false, error: e.message };
+  } finally { busy = false; push(); }
+});
 ipcMain.handle("dismiss-progress-note", () => { progressNote = null; push(); });
 ipcMain.handle("open", (_e, url) => { if (/^https:\/\//.test(url)) shell.openExternal(url); });
 

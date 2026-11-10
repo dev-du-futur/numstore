@@ -11,8 +11,12 @@
 // Rollmark's); Python scripts and the calculator's own files are left as they are.
 //
 // On this PC: userData/progress/<calculator>/<file name> + index.json
-// { files: { "rollmark.sav": { app: "Rollmark", size, savedAt } } }
+// { files: { "rollmark.sav": { app: "Rollmark", size, savedAt } },
+//   ignored: { "clock.sav": sha1 } }: deleted from this PC but still on the calculator,
+//   not copied again unless it changes
 const fs = require("fs");
+const crypto = require("crypto");
+const hash = (data) => crypto.createHash("sha1").update(data).digest("hex");
 const path = require("path");
 
 const MAGIC = 0xee0bddba;
@@ -87,10 +91,17 @@ class Progress {
   keep(calc, records, apps) {
     const idx = this.index(calc);
     const changed = [];
+    const ignored = idx.ignored || {};
+    for (const n of Object.keys(ignored)) // no longer on the calculator: nothing to ignore
+      if (!records.some((r) => r.name === n)) { delete ignored[n]; changed.push(n); }
     for (const r of records) {
       if (SYSTEM.test(r.name) || /[\\/:*?"<>|]/.test(r.name) || r.name.startsWith(".")) continue;
       const app = appFor(r.name, apps);
       if (!app) continue;
+      if (ignored[r.name]) {
+        if (ignored[r.name] === hash(r.data)) continue;
+        delete ignored[r.name]; // played again since: keep it
+      }
       const old = idx.files[r.name];
       const file = path.join(this.dir(calc), r.name);
       if (old && old.size === r.data.length && fs.existsSync(file) && fs.readFileSync(file).equals(r.data)) {
@@ -103,6 +114,7 @@ class Progress {
       idx.files[r.name] = { app, size: r.data.length, savedAt: Date.now() };
       changed.push(r.name);
     }
+    if (Object.keys(ignored).length) idx.ignored = ignored; else delete idx.ignored;
     if (changed.length) this.saveIndex(calc, idx);
     return changed;
   }
@@ -151,14 +163,29 @@ class Progress {
     }
     return out;
   }
-  forget(calc, app) {
+  // deletes an app's copies on this PC; onCalc: that app's files still on the calculator,
+  // which aren't copied again (unless they change)
+  forget(calc, app, onCalc) {
     const idx = this.index(calc);
     for (const [name, f] of Object.entries(idx.files)) {
       if (f.app !== app) continue;
       try { fs.unlinkSync(path.join(this.dir(calc), name)); } catch (e) {}
       delete idx.files[name];
     }
+    if (onCalc && onCalc.length) {
+      idx.ignored = idx.ignored || {};
+      for (const r of onCalc) idx.ignored[r.name] = hash(r.data);
+    }
     this.saveIndex(calc, idx);
+  }
+  // the file list without some files -> what to write from the first removed one on:
+  // { from (offset in the record area), bytes (with the zero size that ends the list) }
+  static without(records, names) {
+    const at = records.findIndex((r) => names.includes(r.name));
+    if (at < 0) return null;
+    let from = 0;
+    for (const r of records.slice(0, at)) from += 3 + Buffer.byteLength(r.name, "latin1") + r.data.length;
+    return { from, bytes: appended(records.slice(at).filter((r) => !names.includes(r.name)), 0, Infinity) };
   }
 }
 

@@ -12,6 +12,7 @@ contextBridge.exposeInMainWorld("store", {
   version: () => ipcRenderer.invoke("version"),
   setExtend: (on) => ipcRenderer.invoke("set-extend", on),
   forgetProgress: (app) => ipcRenderer.invoke("forget-progress", app),
+  removeSave: (app) => ipcRenderer.invoke("remove-save", app),
   dismissProgressNote: () => ipcRenderer.invoke("dismiss-progress-note"),
   on: (ch, fn) => ipcRenderer.on(ch, (_e, d) => fn(d)),
 });

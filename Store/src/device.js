@@ -345,13 +345,46 @@ function addFiles(records) {
   });
 }
 
+// Takes files out of the list: the ones after them move up, as when Epsilon deletes a
+// file. Epsilon remembers where the last file it looked up is (just after the list: the
+// size it may use, that file's name checksum, a pointer into the list); that's cleared,
+// as Epsilon itself does after a change, so it looks files up again.
+function removeFiles(names) {
+  const files = require("./files");
+  return withCalc(async (c, info) => {
+    const st = await readStorage(c, info);
+    const change = files.Progress.without(st.records, names);
+    if (!change) return { removed: [] };
+    const a = info.storageAddress, n = info.storageSize;
+    const tail = await c.read(a + 4 + n, 256);
+    let cache = -1;
+    for (let i = 8; i + 12 <= tail.length; i += 4) {
+      const ptr = tail.readUInt32LE(i + 8);
+      if (tail.readUInt32LE(i) === n && (ptr === 0 || (ptr >= a + 4 && ptr < a + 4 + n))) { cache = i + 4; break; }
+    }
+    // not found: another firmware, or files put aside (Epsilon does that in exam mode)
+    if (cache < 0) throw new Error("Numstore can't safely change the files on this calculator's firmware");
+    const clear = () => c.write(a + 4 + n + cache, Buffer.alloc(8));
+    await clear();
+    await c.write(a + 4 + change.from, change.bytes);
+    const oldEnd = st.end + 2, newEnd = change.from + change.bytes.length; // zeros where it used to end
+    if (oldEnd > newEnd) await c.write(a + 4 + newEnd, Buffer.alloc(oldEnd - newEnd));
+    await clear();
+    const after = await readStorage(c, info);
+    const left = st.records.filter((r) => !names.includes(r.name));
+    if (after.records.length !== left.length || after.records.some((r, i) => r.name !== left[i].name || !r.data.equals(left[i].data)))
+      throw new Error("the calculator's files didn't read back right");
+    return { removed: st.records.filter((r) => names.includes(r.name)).map((r) => r.name) };
+  });
+}
+
 function watch(cb) {
   usb.on("attach", cb);
   usb.on("detach", cb);
   return () => { usb.off("attach", cb); usb.off("detach", cb); };
 }
 
-module.exports = { scan, watch, removeAll, readFiles, addFiles, findDevice, Calculator, APP_SECTOR, EXT_END };
+module.exports = { scan, watch, removeAll, readFiles, addFiles, removeFiles, findDevice, Calculator, APP_SECTOR, EXT_END };
 
 if (require.main === module) {
   scan().then(

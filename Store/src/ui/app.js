@@ -424,10 +424,14 @@ function saveCell(name) {
   const bytes = onCalc || k.size;
   const size = files?.size || 0;
   const pct = size ? Math.max(2, Math.min(100, 100 * bytes / size)) : 0;
-  const where = (on, icon, short, long) => `<span class="where ${on ? "on" : ""}" title="${on ? "Saved " + long : "Not " + long}">${icon}${short}</span>`;
+  // an app that isn't installed: each place its save is can be emptied (the × on the pill)
+  const away = !S.installed.some((a) => a.name === name);
+  const where = (on, icon, short, long, place) => on && away && !S.busy
+    ? `<button class="where on del" data-app="${esc(name)}" data-place="${place}" title="Saved ${long}. Click to delete it from there">${icon}${short}<b aria-hidden="true">×</b></button>`
+    : `<span class="where ${on ? "on" : ""}" title="${on ? "Saved " + long : "Not " + long}">${icon}${short}</span>`;
   return `<div class="save">
     <div class="save-top"><span class="save-size">Save · ${kb(bytes)}</span>
-      ${where(!!onCalc, ICON_CALC, "Calculator", "on the calculator")}${where(!!k, ICON_PC, "PC", "on this PC")}</div>
+      ${where(!!onCalc, ICON_CALC, "Calculator", "on the calculator", "calc")}${where(!!k, ICON_PC, "PC", "on this PC", "pc")}</div>
     ${size ? `<div class="minibar" title="${kb(bytes)} of the calculator's ${kb(size)} for files"><span style="width:${pct}%;background:${colorFor(name)}"></span></div>` : ""}
     ${k ? `<div class="save-when">Copied ${esc(day(k.savedAt))}</div>` : ""}
   </div>`;
@@ -450,7 +454,9 @@ function renderDevice() {
     v.innerHTML = `<div class="empty"><b>No calculator connected</b>Plug your NumWorks into this computer with a USB cable, turn it on, and it will show up here.</div>`;
     return;
   }
-  const away = Object.keys(S.progress?.kept || {}).filter((n) => !S.installed.some((a) => a.name === n)).sort();
+  // apps that aren't installed but have a save, on this PC or still on the calculator
+  const away = [...new Set([...Object.keys(S.progress?.kept || {}), ...Object.keys(S.progress?.files?.apps || {})])]
+    .filter((n) => !S.installed.some((a) => a.name === n)).sort();
   v.insertAdjacentHTML("beforeend", `<div class="list-head"><span>On the calculator</span><span>${S.installed.length} app${S.installed.length === 1 ? "" : "s"}</span></div>`);
   if (!S.installed.length) v.insertAdjacentHTML("beforeend", `<div class="empty"><b>No apps installed yet</b>Pick one in the Store tab.</div>`);
   for (const a of S.installed) {
@@ -465,13 +471,16 @@ function renderDevice() {
       esc([variantLabel(a), mb(a.size), !known && "not from Numstore"].filter(Boolean).join(" · ")), saveCell(a.name), b);
   }
   if (!away.length) return;
-  v.insertAdjacentHTML("beforeend", `<div class="list-head"><span>Removed, progress kept on this PC</span><span>goes back when you reinstall</span></div>`);
+  v.insertAdjacentHTML("beforeend", `<div class="list-head"><span>Saves of removed apps</span><span>used again when you reinstall</span></div>`);
   for (const name of away) {
     const b = document.createElement("button");
     b.className = "key"; b.textContent = "Delete save";
-    b.onclick = () => askForgetProgress(name);
+    b.title = "Delete it from the calculator and from this PC";
+    b.disabled = S.busy;
+    b.onclick = () => askDeleteSave(name, "both");
     deviceRow(v, name, S.catalog.find((c) => c.name === name)?.icon, "Not installed", saveCell(name), b);
   }
+  v.querySelectorAll(".where.del").forEach((x) => x.onclick = () => askDeleteSave(x.dataset.app, x.dataset.place));
 }
 
 function variantLabel(inst) {
@@ -545,6 +554,25 @@ function renderProgressNote() {
     x.onclick = () => window.store.dismissProgressNote();
     box.appendChild(x);
   }
+}
+
+// delete a removed app's save: from the calculator, from this PC, or both
+async function askDeleteSave(name, place) {
+  const onCalc = S.progress?.files?.apps?.[name] || 0, k = kept(name);
+  const calc = (place === "calc" || place === "both") && onCalc, pc = (place === "pc" || place === "both") && !!k;
+  if (!calc && !pc) return;
+  const gone = (calc || !onCalc) && (pc || !k); // nowhere left
+  const what = calc && pc ? "from the calculator and from this PC" : calc ? "from the calculator" : "from this PC";
+  const rest = gone ? `<b>${esc(name)} will start from the beginning</b> next time you install it.`
+    : calc ? `It frees ${kb(onCalc)} for files. The copy on this PC stays, and goes back on the calculator when you install ${esc(name)} again.`
+    : `It stays on the calculator, and ${esc(name)} uses it again if you reinstall it.`;
+  if (!await modal(`Delete ${name}'s save`, `<p>${esc(name)}'s save will be deleted ${what}.</p><p class="hint">${rest}</p>`, "Delete", gone)) return;
+  if (pc) await window.store.forgetProgress(name);
+  if (calc) {
+    const r = await window.store.removeSave(name);
+    if (!r.ok) return toast(`Couldn't delete it from the calculator: ${r.error}`, "bad");
+  }
+  toast(`${name}'s save deleted ${what}`, "ok");
 }
 
 async function askForgetProgress(name) {
