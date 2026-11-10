@@ -120,16 +120,18 @@ function renderFiles() {
   row.classList.toggle("hidden", !f); legend.classList.toggle("hidden", !f);
   bar.innerHTML = ""; legend.innerHTML = "";
   if (!f) return;
-  const parts = [...Object.entries(f.apps).sort((x, y) => y[1] - x[1]).map(([n, b]) => [`${n} save`, b, colorFor(n)]),
+  const on = new Set((S.installed || []).map((i) => i.name));
+  const parts = [...Object.entries(f.apps).sort((x, y) => y[1] - x[1]).map(([n, b]) => [on.has(n) ? `${n} save` : `${n} save (app removed)`, b, colorFor(n),
+      on.has(n) ? "" : `${n} isn't on the calculator, but its save is still in the file list: removing an app doesn't erase the files it wrote. ${n} uses it again if you reinstall it.`]),
     ...(f.other ? [["Python scripts and other files", f.other, "#a7b0bd"]] : [])];
-  for (const [label, bytes, color] of parts) {
+  for (const [label, bytes, color, why] of parts) {
     const seg = document.createElement("div");
     seg.className = "seg";
     seg.style.width = Math.max(0.6, 100 * bytes / f.size) + "%";
     seg.style.background = color;
-    seg.title = `${label} · ${kb(bytes)}`;
+    seg.title = why || `${label} · ${kb(bytes)}`;
     bar.appendChild(seg);
-    legend.insertAdjacentHTML("beforeend", `<span><i style="background:${color}"></i>${esc(label)} · ${kb(bytes)}</span>`);
+    legend.insertAdjacentHTML("beforeend", `<span${why ? ` class="stale" title="${esc(why)}"` : ""}><i style="background:${color}"></i>${esc(label)} · ${kb(bytes)}</span>`);
   }
   legend.insertAdjacentHTML("beforeend", `<span><i style="background:#e4e5e8"></i>Free · ${kb(f.size - f.used)}</span>`);
   $("#ftext").innerHTML = `<b>${kb(f.size - f.used)}</b> free of ${kb(f.size)}`;
@@ -202,86 +204,200 @@ async function askExtendOff() {
 }
 
 // ---- views --------------------------------------------------------------------
+// ---- the store: cards, a list or icons; filters and order (remembered) -----------------
+const look = Object.assign({ view: "cards", show: "all", cat: "", author: "", sort: "store" },
+  (() => { try { return JSON.parse(localStorage.getItem("numstore.look")) || {}; } catch (e) { return {}; } })());
+const saveLook = () => { try { localStorage.setItem("numstore.look", JSON.stringify(look)); } catch (e) {} };
+
 function matches(a) {
   const q = $("#q").value.trim().toLowerCase();
-  return !q || [a.name, a.description, a.author, a.category].some((f) => String(f || "").toLowerCase().includes(q));
+  if (q && ![a.name, a.description, a.author, a.category].some((f) => String(f || "").toLowerCase().includes(q))) return false;
+  if (look.show === "in" && !a.installed) return false;
+  if (look.show === "out" && a.installed) return false;
+  if (look.cat && a.category !== look.cat) return false;
+  if (look.author && a.author !== look.author) return false;
+  return true;
 }
 
+// a select's options from the catalog, with how many apps each has
+function fillPick(sel, all, key, value) {
+  const n = {};
+  for (const a of S.catalog) if (a[key]) n[a[key]] = (n[a[key]] || 0) + 1;
+  const opts = Object.keys(n).sort((x, y) => x.localeCompare(y));
+  const html = `<option value="">${all}</option>` + opts.map((o) => `<option value="${esc(o)}">${esc(o)} (${n[o]})</option>`).join("");
+  if (sel.dataset.html !== html) { sel.innerHTML = html; sel.dataset.html = html; }
+  sel.value = opts.includes(value) ? value : "";
+}
+
+function renderTools() {
+  document.querySelectorAll(".views button").forEach((b) => {
+    b.classList.toggle("on", b.dataset.view === look.view);
+    b.setAttribute("aria-checked", b.dataset.view === look.view);
+  });
+  fillPick($("#f-cat"), "All categories", "category", look.cat);
+  fillPick($("#f-author"), "All authors", "author", look.author);
+  $("#f-show").value = look.show; $("#f-sort").value = look.sort;
+  const filtered = look.show !== "all" || look.cat || look.author;
+  $("#f-reset").classList.toggle("hidden", !filtered);
+  for (const id of ["#f-show", "#f-cat", "#f-author"]) $(id).classList.toggle("set", !!$(id).value && $(id).value !== "all");
+}
+
+// the button of an app: install, remove or switch size, or take it out of the basket
+function action(a, v) {
+  const variant = a.variants.find((x) => x.id === v);
+  const inB = basket.get(a.name);
+  const off = !S.calc.connected || !!S.calc.error || S.busy;
+  const offWhy = off && !S.calc.connected ? "Connect your calculator first" : "";
+  if (a.installed && a.installedVariant === v) {
+    const marked = inB?.action === "remove";
+    return { kind: "remove", marked, off, label: marked ? "✓ Removing" : "Remove",
+      title: offWhy || (marked ? "Click to keep it" : `Remove ${a.name}`),
+      click: () => toggleRemove(a.name), hover: marked ? null : { remove: a.name } };
+  }
+  const marked = inB?.action === "add" && inB.variant === v;
+  return { kind: a.installed ? "switch" : "add", marked, off,
+    label: marked ? "✓ In the basket" : a.installed ? `Switch to ${variant.label}` : "Install",
+    title: offWhy || (marked ? "Click to take it out" : a.installed ? `Switch ${a.name} to ${variant.label}` : `Install ${a.name} · ${mb(variant.size)}`),
+    click: () => toggleAdd(a, v),
+    hover: marked ? null : a.installed ? { add: a.name, size: variant.size, remove: a.name } : { add: a.name, size: variant.size } };
+}
+const ROUND = {
+  add: `<svg viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>`,
+  remove: `<svg viewBox="0 0 24 24"><path d="M5 12h14"/></svg>`,
+  switch: `<svg viewBox="0 0 24 24"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg>`,
+  marked: `<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>`,
+};
+function actionButton(a, v, round) {
+  const x = action(a, v);
+  const b = document.createElement("button");
+  if (round) {
+    b.className = `round ${x.marked ? "marked" : x.kind}`;
+    b.innerHTML = ROUND[x.marked ? "marked" : x.kind];
+    b.setAttribute("aria-label", x.title);
+  } else {
+    b.className = x.marked ? "key dark" : x.kind === "remove" ? "key" : "key orange";
+    b.textContent = x.label;
+  }
+  b.title = x.title;
+  b.disabled = x.off;
+  b.onclick = (e) => { e.stopPropagation(); x.click(); };
+  if (x.hover) hoverPreview(b, x.hover);
+  return b;
+}
+function sizePicker(a, v) {
+  const seg = document.createElement("div");
+  seg.className = "sizes";
+  for (const x of a.variants) {
+    const k = document.createElement("button");
+    k.className = "size" + (x.id === v ? " on" : "");
+    k.innerHTML = `${esc(x.label)}<span>${mb(x.size)}</span>`;
+    k.onclick = () => { chosen[a.id] = x.id; render(); };
+    seg.appendChild(k);
+  }
+  return seg;
+}
+const keptNote = (a) => kept(a.name) && !a.installed
+  ? `<div class="kept" title="Kept on this PC: it goes back on the calculator when you install ${esc(a.name)}">Progress saved · ${esc(day(kept(a.name).savedAt))}</div>` : "";
+
 function renderStore() {
+  renderTools();
   const view = $("#view-store");
   view.innerHTML = "";
+  view.className = { cards: "grid", list: "slist", icons: "tiles" }[look.view] || "grid";
+  const sizeOf = (a) => a.variants.find((x) => x.id === pickVariant(a))?.size || 0;
   const list = S.catalog.filter(matches);
+  if (look.sort === "name") list.sort((x, y) => x.name.localeCompare(y.name));
+  if (look.sort === "light") list.sort((x, y) => sizeOf(x) - sizeOf(y));
+  if (look.sort === "heavy") list.sort((x, y) => sizeOf(y) - sizeOf(x));
   $("#n-store").textContent = S.catalog.length || "";
+  $("#found").textContent = list.length === S.catalog.length ? "" : `${list.length} of ${S.catalog.length}`;
   if (!list.length) {
-    view.innerHTML = `<div class="empty"><b>No apps found</b>Try another search.</div>`;
+    view.innerHTML = `<div class="empty"><b>No apps found</b>Try another search, or reset the filters.</div>`;
     return;
   }
-  for (const a of list) {
-    const card = document.createElement("div");
-    card.className = "card";
-    card.appendChild(iconEl(a.icon, a.name));
-    card.insertAdjacentHTML("beforeend", `<div class="name">${esc(a.name)}</div>
-      <div class="meta">${esc([a.category, a.author, a.version && "v" + a.version].filter(Boolean).join(" · "))}</div>
-      <p class="desc">${esc(a.description)}</p>`);
-    if (a.credit) card.insertAdjacentHTML("beforeend", `<div class="meta">${esc(a.credit)}</div>`);
-    if (kept(a.name) && !a.installed)
-      card.insertAdjacentHTML("beforeend", `<div class="kept" title="Kept on this PC: it goes back on the calculator when you install ${esc(a.name)}">Progress saved · ${esc(day(kept(a.name).savedAt))}</div>`);
-    if (a.homepage) { // apps from other projects: where their source and licence are
-      const l = document.createElement("button");
-      l.className = "link";
-      l.textContent = `Source${a.license ? " · " + a.license : ""}`;
-      l.onclick = () => window.store.open(a.homepage);
-      card.appendChild(l);
-    }
-    const v = pickVariant(a);
-    const variant = a.variants.find((x) => x.id === v);
-    if (a.variants.length > 1) {
-      const seg = document.createElement("div");
-      seg.className = "sizes";
-      for (const x of a.variants) {
-        const k = document.createElement("button");
-        k.className = "size" + (x.id === v ? " on" : "");
-        k.innerHTML = `${esc(x.label)}<span>${mb(x.size)}</span>`;
-        k.onclick = () => { chosen[a.id] = x.id; render(); };
-        seg.appendChild(k);
-      }
-      card.appendChild(seg);
-      card.insertAdjacentHTML("beforeend", `<div class="size-desc">${esc(variant.description)}</div>`);
-    }
-    const foot = document.createElement("div");
-    foot.className = "card-foot";
-    const instLabel = a.installed ? a.variants.find((x) => x.id === a.installedVariant)?.label : "";
-    foot.insertAdjacentHTML("beforeend", a.installed
-      ? `<span class="badge on">Installed${instLabel && a.variants.length > 1 ? " · " + esc(instLabel) : ""}</span>`
-      : `<span class="badge">${a.variants.length > 1 ? "" : mb(variant.size)}${variant.ready === false ? " · download" : ""}</span>`);
-    if (a.source === "library" && !a.installed) {
-      const f = document.createElement("button");
-      f.className = "link"; f.textContent = "Forget";
-      f.onclick = () => window.store.forget(a.id);
-      foot.appendChild(f);
-    }
-    const b = document.createElement("button");
-    const inB = basket.get(a.name);
-    if (a.installed && a.installedVariant === v) {
-      const marked = inB?.action === "remove";
-      b.className = marked ? "key dark" : "key"; b.textContent = marked ? "✓ Removing" : "Remove";
-      b.title = marked ? "Click to keep it" : "";
-      b.onclick = () => toggleRemove(a.name);
-      if (!marked) hoverPreview(b, { remove: a.name });
-    } else {
-      const marked = inB?.action === "add" && inB.variant === v;
-      b.className = marked ? "key dark" : "key orange";
-      b.textContent = marked ? "✓ In the basket" : a.installed ? `Switch to ${variant.label}` : "Install";
-      b.title = marked ? "Click to take it out" : "";
-      b.onclick = () => toggleAdd(a, v);
-      if (!marked) hoverPreview(b, a.installed ? { add: a.name, size: variant.size, remove: a.name } : { add: a.name, size: variant.size });
-    }
-    b.disabled = !S.calc.connected || !!S.calc.error || S.busy;
-    if (b.disabled) b.title = S.calc.connected ? "" : "Connect your calculator first";
-    foot.appendChild(b);
-    card.appendChild(foot);
-    view.appendChild(card);
+  for (const a of list) view.appendChild((look.view === "list" ? listRow : look.view === "icons" ? tile : card)(a));
+}
+
+// cards: everything, with the full description and the sizes
+function card(a) {
+  const el = document.createElement("div");
+  el.className = "card";
+  el.appendChild(iconEl(a.icon, a.name));
+  el.insertAdjacentHTML("beforeend", `<div class="name">${esc(a.name)}</div>
+    <div class="meta">${esc([a.category, a.author, a.version && "v" + a.version].filter(Boolean).join(" · "))}</div>
+    <p class="desc">${esc(a.description)}</p>`);
+  if (a.credit) el.insertAdjacentHTML("beforeend", `<div class="meta">${esc(a.credit)}</div>`);
+  el.insertAdjacentHTML("beforeend", keptNote(a));
+  if (a.homepage) { // apps from other projects: where their source and licence are
+    const l = document.createElement("button");
+    l.className = "link";
+    l.textContent = `Source${a.license ? " · " + a.license : ""}`;
+    l.onclick = () => window.store.open(a.homepage);
+    el.appendChild(l);
   }
+  const v = pickVariant(a);
+  const variant = a.variants.find((x) => x.id === v);
+  if (a.variants.length > 1) {
+    el.appendChild(sizePicker(a, v));
+    el.insertAdjacentHTML("beforeend", `<div class="size-desc">${esc(variant.description)}</div>`);
+  }
+  const foot = document.createElement("div");
+  foot.className = "card-foot";
+  const instLabel = a.installed ? a.variants.find((x) => x.id === a.installedVariant)?.label : "";
+  foot.insertAdjacentHTML("beforeend", a.installed
+    ? `<span class="badge on">Installed${instLabel && a.variants.length > 1 ? " · " + esc(instLabel) : ""}</span>`
+    : `<span class="badge">${a.variants.length > 1 ? "" : mb(variant.size)}${variant.ready === false ? " · download" : ""}</span>`);
+  if (a.source === "library" && !a.installed) {
+    const f = document.createElement("button");
+    f.className = "link"; f.textContent = "Forget";
+    f.onclick = () => window.store.forget(a.id);
+    foot.appendChild(f);
+  }
+  foot.appendChild(actionButton(a, v));
+  el.appendChild(foot);
+  return el;
+}
+
+// list: one line each, icon, name and the description's first sentence, size, button
+const short = (s) => { const t = String(s || ""); const m = t.match(/^.+?[.!?](\s|$)/); return (m ? m[0] : t).trim(); };
+function listRow(a) {
+  const v = pickVariant(a);
+  const variant = a.variants.find((x) => x.id === v);
+  const el = document.createElement("div");
+  el.className = "srow-app" + (a.installed ? " installed" : "");
+  el.appendChild(iconEl(a.icon, a.name));
+  el.insertAdjacentHTML("beforeend", `<div class="grow">
+      <div class="line"><h3>${esc(a.name)}</h3><span class="meta">${esc([a.category, a.author].filter(Boolean).join(" · "))}</span></div>
+      <div class="sdesc" title="${esc(a.description)}">${esc(short(a.description))}</div>${keptNote(a)}</div>`);
+  if (a.variants.length > 1) {
+    const sel = document.createElement("select");
+    sel.className = "pick small";
+    sel.setAttribute("aria-label", `${a.name} size`);
+    sel.innerHTML = a.variants.map((x) => `<option value="${esc(x.id)}">${esc(x.label)} · ${mb(x.size)}</option>`).join("");
+    sel.value = v;
+    sel.onchange = () => { chosen[a.id] = sel.value; render(); };
+    el.appendChild(sel);
+  } else el.insertAdjacentHTML("beforeend", `<span class="badge">${mb(variant.size)}</span>`);
+  el.insertAdjacentHTML("beforeend", `<span class="state">${a.installed ? "Installed" : ""}</span>`);
+  el.appendChild(actionButton(a, v));
+  return el;
+}
+
+// icons: like the calculator's home screen, with a round button on the icon
+function tile(a) {
+  const v = pickVariant(a);
+  const variant = a.variants.find((x) => x.id === v);
+  const el = document.createElement("div");
+  el.className = "tile" + (a.installed ? " installed" : "") + (basket.has(a.name) ? " queued" : "");
+  el.title = `${a.name} · ${mb(variant.size)}${a.variants.length > 1 ? ` (${variant.label})` : ""}\n${a.description || ""}`;
+  const pic = document.createElement("div");
+  pic.className = "pic";
+  pic.appendChild(iconEl(a.icon, a.name));
+  if (a.installed) pic.insertAdjacentHTML("beforeend", `<span class="on-calc" title="On your calculator"></span>`);
+  pic.appendChild(actionButton(a, v, true));
+  el.appendChild(pic);
+  el.insertAdjacentHTML("beforeend", `<div class="tname">${esc(a.name)}</div><div class="tsize">${mb(variant.size)}</div>`);
+  return el;
 }
 
 // size shown on a card: what the user picked, else what's installed, else the default
@@ -441,6 +557,7 @@ function render() {
   if (!S) return;
   renderCalc(); renderStorage(); renderRestore(); renderProgressNote(); renderStore(); renderDevice(); renderBasket();
   $("#view-store").classList.toggle("hidden", tab !== "store");
+  $("#store-tools").classList.toggle("hidden", tab !== "store");
   $("#view-device").classList.toggle("hidden", tab !== "device");
   const note = $("#online-note");
   note.classList.toggle("hidden", !S.onlineError || tab !== "store");
@@ -615,6 +732,10 @@ document.querySelectorAll(".tab").forEach((t) => t.addEventListener("click", () 
   render();
 }));
 $("#q").addEventListener("input", render);
+document.querySelectorAll(".views button").forEach((b) => b.addEventListener("click", () => { look.view = b.dataset.view; saveLook(); render(); }));
+for (const [id, key] of [["#f-show", "show"], ["#f-cat", "cat"], ["#f-author", "author"], ["#f-sort", "sort"]])
+  $(id).addEventListener("change", () => { look[key] = $(id).value; saveLook(); render(); });
+$("#f-reset").addEventListener("click", () => { Object.assign(look, { show: "all", cat: "", author: "" }); saveLook(); render(); });
 $("#add-file").addEventListener("click", async () => {
   const r = await window.store.addFile();
   if (r?.error) toast(r.error, "bad");

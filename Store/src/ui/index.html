@@ -59,6 +59,29 @@
   <main>
     <div id="restore" class="restore hidden"></div>
     <div id="progress-note" class="restore hidden"></div>
+    <!-- how the store looks: cards, a list or icons; what it shows and in which order -->
+    <div id="store-tools" class="store-tools">
+      <div class="views" role="radiogroup" aria-label="Style">
+        <button data-view="cards" title="Cards: full descriptions and sizes"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg>Cards</button>
+        <button data-view="list" title="List: one app per line"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="4" height="4" rx="1"/><rect x="3" y="10" width="4" height="4" rx="1"/><rect x="3" y="16" width="4" height="4" rx="1"/><path d="M10 6h11M10 12h11M10 18h11"/></svg>List</button>
+        <button data-view="icons" title="Icons: just the icons and names"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="5" height="5" rx="1"/><rect x="9.5" y="3" width="5" height="5" rx="1"/><rect x="16" y="3" width="5" height="5" rx="1"/><rect x="3" y="10" width="5" height="5" rx="1"/><rect x="9.5" y="10" width="5" height="5" rx="1"/><rect x="16" y="10" width="5" height="5" rx="1"/><path d="M3 19h5M9.5 19h5M16 19h5"/></svg>Icons</button>
+      </div>
+      <select id="f-show" class="pick" aria-label="Show">
+        <option value="all">All apps</option>
+        <option value="out">Not installed</option>
+        <option value="in">Installed</option>
+      </select>
+      <select id="f-cat" class="pick" aria-label="Category"></select>
+      <select id="f-author" class="pick" aria-label="Author"></select>
+      <select id="f-sort" class="pick" aria-label="Sort">
+        <option value="store">Store order</option>
+        <option value="name">Name, A to Z</option>
+        <option value="light">Lightest first</option>
+        <option value="heavy">Heaviest first</option>
+      </select>
+      <span class="found" id="found"></span>
+      <button class="link hidden" id="f-reset">Reset filters</button>
+    </div>
     <div id="view-store" class="grid"></div>
     <div id="view-device" class="list hidden"></div>
     <p id="online-note" class="note hidden"></p>
